@@ -112,8 +112,6 @@ async def search_restaurants(
                 "radius": api_radius,
             }
         }
-        # 現在地・駅近検索は距離順で返す
-        base_body["rankPreference"] = "DISTANCE"
 
     results: list[Restaurant] = []
     page_token: str | None = None
