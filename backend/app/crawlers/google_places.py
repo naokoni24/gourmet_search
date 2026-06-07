@@ -4,26 +4,6 @@ from app.models.restaurant import Restaurant
 
 PLACES_V1 = "https://places.googleapis.com/v1/places:searchText"
 
-# キーワード/ジャンル → Google includedType マッピング
-KEYWORD_TO_TYPE: dict[str, str] = {
-    "ラーメン": "ramen_restaurant",
-    "寿司": "sushi_restaurant", "すし": "sushi_restaurant", "鮨": "sushi_restaurant",
-    "焼肉": "barbecue_restaurant", "焼き肉": "barbecue_restaurant",
-    "焼き鳥": "yakitori_restaurant", "やきとり": "yakitori_restaurant",
-    "イタリアン": "italian_restaurant", "イタリア": "italian_restaurant",
-    "中華": "chinese_restaurant", "中国料理": "chinese_restaurant",
-    "韓国料理": "korean_restaurant", "韓国": "korean_restaurant",
-    "カフェ": "cafe", "コーヒー": "coffee_shop",
-    "居酒屋": "japanese_izakaya_restaurant",
-    "和食": "japanese_restaurant",
-    "とんかつ": "tonkatsu_restaurant",
-    "天ぷら": "tempura_restaurant",
-    "しゃぶしゃぶ": "shabu_shabu_restaurant",
-    "ピザ": "pizza_restaurant",
-    "ハンバーガー": "hamburger_restaurant",
-    "バー": "bar",
-}
-
 TYPE_MAP = {
     "restaurant": "レストラン", "japanese_restaurant": "和食",
     "sushi_restaurant": "寿司", "ramen_restaurant": "ラーメン",
@@ -110,33 +90,30 @@ async def search_restaurants(
         "X-Goog-FieldMask": FIELD_MASK,
         "Accept-Language": "ja",
     }
+
     food_words = ["レストラン", "飲食", "ラーメン", "寿司", "焼肉", "カフェ", "居酒屋",
                   "restaurant", "ramen", "sushi", "cafe", "food", "lunch", "dinner"]
     has_food_word = any(w in query.lower() for w in food_words)
     effective_query = query if has_food_word else f"{query} レストラン"
-
-    # キーワード/ジャンルが特定の料理種別に対応する場合は includedType で絞り込む
-    included_type: str | None = None
-    for term in [keyword, genre]:
-        if term and term in KEYWORD_TO_TYPE:
-            included_type = KEYWORD_TO_TYPE[term]
-            break
 
     base_body: dict = {
         "textQuery": effective_query,
         "languageCode": "ja",
         "maxResultCount": 20,
     }
-    if included_type:
-        base_body["includedType"] = included_type
+
     if location:
         lat, lng = location.split(",")
+        # locationBias より広めの円で候補を集め、Python側で距離フィルター
+        api_radius = max(radius * 1.5, 2000)
         base_body["locationBias"] = {
             "circle": {
                 "center": {"latitude": float(lat), "longitude": float(lng)},
-                "radius": float(radius),
+                "radius": api_radius,
             }
         }
+        # 現在地・駅近検索は距離順で返す
+        base_body["rankPreference"] = "DISTANCE"
 
     results: list[Restaurant] = []
     page_token: str | None = None
@@ -155,6 +132,6 @@ async def search_restaurants(
             page_token = data.get("nextPageToken")
             if not page_token:
                 break
-            await asyncio.sleep(2)  # nextPageToken は少し待たないと無効になる
+            await asyncio.sleep(2)
 
     return results
