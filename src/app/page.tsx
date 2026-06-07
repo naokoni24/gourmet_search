@@ -51,8 +51,8 @@ export default function Home() {
       </header>
 
       <div className="max-w-6xl mx-auto px-4 py-6">
-        <div className="flex gap-6">
-          <aside className="w-64 shrink-0">
+        <div className="flex flex-col md:flex-row gap-6">
+          <aside className="w-full md:w-64 md:shrink-0">
             <SearchFilter onSearch={handleSearch} loading={loading} />
           </aside>
 

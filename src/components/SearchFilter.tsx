@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { SearchParams } from '@/types/restaurant'
-import { Search, LocateFixed, MapPin } from 'lucide-react'
+import { Search, LocateFixed, MapPin, ChevronDown, ChevronUp } from 'lucide-react'
 
 const GENRES = ['', '和食', '洋食', 'イタリアン', '中華', 'ラーメン', '居酒屋', '焼肉', 'カフェ', 'バー', '韓国料理']
 const BUDGETS = [
@@ -35,6 +35,7 @@ export default function SearchFilter({ onSearch, loading }: Props) {
 
   const [locating, setLocating] = useState(false)
   const [locError, setLocError] = useState<string | null>(null)
+  const [open, setOpen] = useState(true)
 
   const set = (key: keyof SearchParams, value: unknown) =>
     setParams(p => ({ ...p, [key]: value }))
@@ -74,7 +75,17 @@ export default function SearchFilter({ onSearch, loading }: Props) {
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-4">
-      <h2 className="font-semibold text-gray-700">絞り込み</h2>
+      <button
+        className="flex items-center justify-between w-full md:cursor-default"
+        onClick={() => setOpen(o => !o)}
+      >
+        <h2 className="font-semibold text-gray-700">絞り込み</h2>
+        <span className="md:hidden text-gray-400">
+          {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+        </span>
+      </button>
+
+      <div className={`flex flex-col gap-4 ${open ? '' : 'hidden md:flex'}`}>
 
       <div>
         <label className="text-xs text-gray-500 mb-1 block">キーワード</label>
@@ -202,13 +213,14 @@ export default function SearchFilter({ onSearch, loading }: Props) {
       </div>
 
       <button
-        onClick={() => onSearch(params)}
+        onClick={() => { onSearch(params); setOpen(false) }}
         disabled={loading}
         className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white rounded-lg py-2.5 text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
       >
         <Search size={16} />
         検索する
       </button>
+      </div>
     </div>
   )
 }
