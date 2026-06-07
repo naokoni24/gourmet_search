@@ -4,7 +4,7 @@ import os
 import math
 import httpx
 
-from app.models.restaurant import Restaurant, SearchParams
+from app.models.restaurant import Restaurant
 from app.crawlers import google_places
 
 router = APIRouter()
@@ -43,19 +43,16 @@ async def search(
     radius: Optional[int] = Query(None, description="駅からの距離(m)"),
     current_lat: Optional[float] = Query(None, description="現在地緯度"),
     current_lng: Optional[float] = Query(None, description="現在地経度"),
-    open_now: bool = Query(False, description="今すぐ営業中"),
 ):
     query = f"{station} {area} {genre} {keyword}".strip() or "レストラン"
     google_key = os.getenv("GOOGLE_PLACES_API_KEY", "")
 
-    # 現在地が指定されている場合はそのまま使用、駅名の場合はジオコーディング
     location = None
     if current_lat is not None and current_lng is not None:
         location = f"{current_lat},{current_lng}"
     elif station and google_key:
         location = await _geocode_station(station, google_key)
 
-    # 現在地検索時は radius 未指定でも 1000m をデフォルトに
     effective_radius = radius
     if current_lat is not None and effective_radius is None:
         effective_radius = 1000
@@ -91,8 +88,6 @@ async def search(
             items = [r for r in items if dist_fn(r) <= effective_radius]
         if rating_min is not None:
             items = [r for r in items if r.rating and r.rating >= rating_min]
-        if open_now:
-            items = [r for r in items if r.open_now is True]
         if dist_fn:
             for r in items:
                 r.distance_m = round(dist_fn(r))
@@ -106,11 +101,4 @@ async def search(
     return {
         "restaurants": restaurants,
         "total": len(restaurants),
-        "debug": {
-            "location": location,
-            "effective_radius": effective_radius,
-            "current_lat": current_lat,
-            "current_lng": current_lng,
-            "station": station,
-        },
     }

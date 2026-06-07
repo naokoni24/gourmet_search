@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(data)
   } catch {
     return NextResponse.json(
-      { error: 'バックエンドに接続できません', restaurants: [], blogs: [] },
+      { error: 'バックエンドに接続できません', restaurants: [] },
       { status: 502 }
     )
   }

@@ -15,11 +15,8 @@ class Restaurant(BaseModel):
     lng: Optional[float] = None
     photo_url: Optional[str] = None
     url: Optional[str] = None
-    source: str  # 'google'
-    phone: Optional[str] = None
-    open_now: Optional[bool] = None
+    source: str
     distance_m: Optional[int] = None
-    opening_hours_today: Optional[str] = None
 
 class SearchParams(BaseModel):
     keyword: str = ""
@@ -28,4 +25,3 @@ class SearchParams(BaseModel):
     genre: str = ""
     budget_max: Optional[int] = None
     rating_min: Optional[float] = None
-    open_now: bool = False

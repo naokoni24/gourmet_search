@@ -4,7 +4,6 @@ import { MapPin, Star, ExternalLink } from 'lucide-react'
 
 const SOURCE_LABEL: Record<string, string> = {
   google: 'Google',
-  hotpepper: 'ホットペッパー',
 }
 
 export default function RestaurantCard({ restaurant: r }: { restaurant: Restaurant }) {
