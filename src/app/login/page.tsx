@@ -50,7 +50,7 @@ export default function LoginPage() {
               value={password}
               onChange={e => setPassword(e.target.value)}
               placeholder="パスワードを入力"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-orange-300"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 text-[16px]"
               autoFocus
             />
           </div>

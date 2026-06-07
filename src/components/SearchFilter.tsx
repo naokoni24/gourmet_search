@@ -90,7 +90,7 @@ export default function SearchFilter({ onSearch, loading }: Props) {
       <div>
         <label className="text-xs text-gray-500 mb-1 block">キーワード</label>
         <input
-          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-orange-300"
+          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 text-[16px]"
           placeholder="例：焼き鳥、デート"
           value={params.keyword}
           onChange={e => set('keyword', e.target.value)}
@@ -101,7 +101,7 @@ export default function SearchFilter({ onSearch, loading }: Props) {
       <div>
         <label className="text-xs text-gray-500 mb-1 block">エリア</label>
         <input
-          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-orange-300"
+          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 text-[16px]"
           placeholder="例：渋谷、銀座"
           value={params.area}
           onChange={e => set('area', e.target.value)}
@@ -137,7 +137,7 @@ export default function SearchFilter({ onSearch, loading }: Props) {
           </div>
         ) : (
           <input
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-orange-300"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 text-[16px]"
             placeholder="例：新宿、渋谷"
             value={params.station}
             onChange={e => set('station', e.target.value)}
@@ -150,7 +150,7 @@ export default function SearchFilter({ onSearch, loading }: Props) {
       <div>
         <label className="text-xs text-gray-500 mb-1 block">ジャンル</label>
         <select
-          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-orange-300"
+          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 text-[16px]"
           value={params.genre}
           onChange={e => set('genre', e.target.value)}
         >
@@ -183,7 +183,7 @@ export default function SearchFilter({ onSearch, loading }: Props) {
       <div>
         <label className="text-xs text-gray-500 mb-1 block">予算（上限）</label>
         <select
-          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-orange-300"
+          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 text-[16px]"
           onChange={e => set('budget_max', e.target.value ? Number(e.target.value) : undefined)}
         >
           {BUDGETS.map(b => <option key={b.label} value={b.value ?? ''}>{b.label}</option>)}
@@ -193,7 +193,7 @@ export default function SearchFilter({ onSearch, loading }: Props) {
       <div>
         <label className="text-xs text-gray-500 mb-1 block">最低評価</label>
         <select
-          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-orange-300"
+          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 text-[16px]"
           onChange={e => set('rating_min', e.target.value ? Number(e.target.value) : undefined)}
         >
           {RATINGS.map(r => <option key={r.label} value={r.value ?? ''}>{r.label}</option>)}
