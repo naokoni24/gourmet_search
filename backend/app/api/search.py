@@ -45,7 +45,7 @@ async def search(
     current_lng: Optional[float] = Query(None, description="現在地経度"),
     open_now: bool = Query(False, description="今すぐ営業中"),
 ):
-    query = f"{station} {area} {genre} {keyword}".strip()
+    query = f"{station} {area} {genre} {keyword}".strip() or "レストラン"
     google_key = os.getenv("GOOGLE_PLACES_API_KEY", "")
 
     # 現在地が指定されている場合はそのまま使用、駅名の場合はジオコーディング
