@@ -13,10 +13,7 @@ export type Restaurant = {
   photo_url?: string
   url?: string
   source: 'google'
-  phone?: string
-  open_now?: boolean
   distance_m?: number
-  opening_hours_today?: string
 }
 
 export type SearchParams = {
@@ -27,7 +24,6 @@ export type SearchParams = {
   budget_max?: number
   rating_min?: number
   radius?: number
-  current_lat?: number   // 現在地
+  current_lat?: number
   current_lng?: number
-  open_now: boolean
 }

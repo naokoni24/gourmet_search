@@ -1,6 +1,5 @@
 import asyncio
 import httpx
-from datetime import datetime
 from app.models.restaurant import Restaurant
 
 PLACES_V1 = "https://places.googleapis.com/v1/places:searchText"
@@ -56,10 +55,8 @@ FIELD_MASK = ",".join([
     "places.userRatingCount",
     "places.location",
     "places.photos",
-    "places.currentOpeningHours",
     "places.primaryType",
     "places.primaryTypeDisplayName",
-    "places.nationalPhoneNumber",
     "places.googleMapsUri",
     "nextPageToken",
 ])
@@ -75,16 +72,6 @@ def _parse_places(data: dict, api_key: str) -> list[Restaurant]:
             if photos else None
         )
         loc = p.get("location", {})
-        hours_info = p.get("currentOpeningHours", {})
-        open_now = hours_info.get("openNow") if hours_info else None
-        weekday_idx = datetime.today().weekday()  # 0=月, 6=日
-        descriptions = hours_info.get("weekdayDescriptions", [])
-        if descriptions and weekday_idx < len(descriptions):
-            # "月曜日: 11時30分～..." → "11時30分～..." (曜日プレフィックスを除去)
-            today_str = descriptions[weekday_idx]
-            opening_hours_today = today_str.split(": ", 1)[1] if ": " in today_str else today_str
-        else:
-            opening_hours_today = None
         primary_type = p.get("primaryType", "")
         type_display = p.get("primaryTypeDisplayName", {}).get("text", "")
         if primary_type in TYPE_MAP:
@@ -104,10 +91,7 @@ def _parse_places(data: dict, api_key: str) -> list[Restaurant]:
             lng=loc.get("longitude"),
             photo_url=photo_url,
             url=p.get("googleMapsUri"),
-            phone=p.get("nationalPhoneNumber"),
             source="google",
-            open_now=open_now,
-            opening_hours_today=opening_hours_today,
         ))
     return results
 

@@ -30,7 +30,6 @@ export default function SearchFilter({ onSearch, loading }: Props) {
     station: '',
     genre: '',
     radius: 500,
-    open_now: false,
   })
 
   const [locating, setLocating] = useState(false)
@@ -200,17 +199,7 @@ export default function SearchFilter({ onSearch, loading }: Props) {
         </select>
       </div>
 
-      <div>
-        <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={params.open_now}
-            onChange={e => set('open_now', e.target.checked)}
-            className="accent-orange-500"
-          />
-          今すぐ営業中のみ
-        </label>
-      </div>
+
 
       <button
         onClick={() => { onSearch(params); setOpen(false) }}

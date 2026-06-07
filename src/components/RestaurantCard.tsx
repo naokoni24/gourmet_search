@@ -1,5 +1,5 @@
 import { Restaurant } from '@/types/restaurant'
-import { MapPin, Star, ExternalLink, Clock, Phone } from 'lucide-react'
+import { MapPin, Star, ExternalLink } from 'lucide-react'
 
 
 const SOURCE_LABEL: Record<string, string> = {
@@ -69,40 +69,19 @@ export default function RestaurantCard({ restaurant: r }: { restaurant: Restaura
           )}
         </div>
 
-        {r.opening_hours_today && (
-          <div className="flex items-start gap-1 mt-1 text-xs text-gray-500">
-            <Clock size={10} className="mt-0.5 shrink-0" />
-            <span>{r.opening_hours_today}</span>
-          </div>
-        )}
-        {r.open_now !== undefined && (
-          <span className={`text-xs mt-1 inline-block ${r.open_now ? 'text-green-600' : 'text-red-400'}`}>
-            {r.open_now ? '● 営業中' : '● 営業時間外'}
-          </span>
-        )}
-
-        <div className="mt-2 flex items-center gap-3 flex-wrap">
-          {r.url && (
+        {r.url && (
+          <div className="mt-2">
             <a
               href={r.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-xs text-orange-500 hover:underline"
+              className="flex items-center gap-1 text-xs text-orange-500 hover:underline w-fit"
             >
               <ExternalLink size={10} />
               詳細を見る
             </a>
-          )}
-          {r.phone && (
-            <a
-              href={`tel:${r.phone.replace(/[^\d+]/g, '')}`}
-              className="flex items-center gap-1 text-xs text-blue-500 hover:underline"
-            >
-              <Phone size={10} />
-              {r.phone}
-            </a>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   )
