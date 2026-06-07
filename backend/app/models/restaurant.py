@@ -15,7 +15,7 @@ class Restaurant(BaseModel):
     lng: Optional[float] = None
     photo_url: Optional[str] = None
     url: Optional[str] = None
-    source: str  # 'google' | 'hotpepper'
+    source: str  # 'google'
     phone: Optional[str] = None
     open_now: Optional[bool] = None
     distance_m: Optional[int] = None
@@ -29,4 +29,3 @@ class SearchParams(BaseModel):
     budget_max: Optional[int] = None
     rating_min: Optional[float] = None
     open_now: bool = False
-    sources: list[str] = ["google", "hotpepper", "blog"]
