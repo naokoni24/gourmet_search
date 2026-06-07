@@ -1,15 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { SearchParams, Restaurant, BlogPost } from '@/types/restaurant'
+import { SearchParams, Restaurant } from '@/types/restaurant'
 import SearchFilter from '@/components/SearchFilter'
 import RestaurantCard from '@/components/RestaurantCard'
-import BlogCard from '@/components/BlogCard'
 import { UtensilsCrossed } from 'lucide-react'
 
 export default function Home() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([])
-  const [blogs, setBlogs] = useState<BlogPost[]>([])
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -25,7 +23,6 @@ export default function Home() {
         station: params.station,
         genre: params.genre,
         open_now: String(params.open_now),
-        sources: params.sources.join(','),
         ...(params.budget_max ? { budget_max: String(params.budget_max) } : {}),
         ...(params.rating_min ? { rating_min: String(params.rating_min) } : {}),
         ...(params.radius ? { radius: String(params.radius) } : {}),
@@ -36,11 +33,9 @@ export default function Home() {
       if (!res.ok) throw new Error(`Server error: ${res.status}`)
       const data = await res.json()
       setRestaurants(data.restaurants ?? [])
-      setBlogs(data.blogs ?? [])
     } catch (e) {
       setError('バックエンドに接続できませんでした。サーバーが起動しているか確認してください。')
       setRestaurants([])
-      setBlogs([])
     } finally {
       setLoading(false)
     }
@@ -51,7 +46,7 @@ export default function Home() {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-2">
           <UtensilsCrossed className="text-orange-500" size={24} />
-          <h1 className="text-xl font-bold text-gray-800">グルメサーチ</h1>
+          <h1 className="text-xl font-bold text-gray-800">Googleグルメサーチ</h1>
         </div>
       </header>
 
@@ -83,38 +78,20 @@ export default function Home() {
             )}
 
             {!loading && searched && !error && (
-              <>
-                {restaurants.length === 0 && blogs.length === 0 ? (
-                  <p className="text-center py-16 text-gray-400">見つかりませんでした</p>
-                ) : (
-                  <>
-                    {restaurants.length > 0 && (
-                      <section>
-                        <h2 className="text-sm font-semibold text-gray-500 mb-3">
-                          店舗 {restaurants.length}件
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                          {restaurants.map(r => (
-                            <RestaurantCard key={r.id} restaurant={r} />
-                          ))}
-                        </div>
-                      </section>
-                    )}
-                    {blogs.length > 0 && (
-                      <section>
-                        <h2 className="text-sm font-semibold text-gray-500 mb-3">
-                          ブログ記事 {blogs.length}件
-                        </h2>
-                        <div className="flex flex-col gap-3">
-                          {blogs.map((b, i) => (
-                            <BlogCard key={i} post={b} />
-                          ))}
-                        </div>
-                      </section>
-                    )}
-                  </>
-                )}
-              </>
+              restaurants.length === 0 ? (
+                <p className="text-center py-16 text-gray-400">見つかりませんでした</p>
+              ) : (
+                <section>
+                  <h2 className="text-sm font-semibold text-gray-500 mb-3">
+                    店舗 {restaurants.length}件
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {restaurants.map(r => (
+                      <RestaurantCard key={r.id} restaurant={r} />
+                    ))}
+                  </div>
+                </section>
+              )
             )}
           </main>
         </div>
@@ -122,4 +99,3 @@ export default function Home() {
     </div>
   )
 }
-

@@ -16,7 +16,10 @@ class Restaurant(BaseModel):
     photo_url: Optional[str] = None
     url: Optional[str] = None
     source: str  # 'google' | 'hotpepper'
+    phone: Optional[str] = None
     open_now: Optional[bool] = None
+    distance_m: Optional[int] = None
+    opening_hours_today: Optional[str] = None
 
 class SearchParams(BaseModel):
     keyword: str = ""

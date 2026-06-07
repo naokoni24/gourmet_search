@@ -1,5 +1,6 @@
 import { Restaurant } from '@/types/restaurant'
-import { MapPin, Star, ExternalLink } from 'lucide-react'
+import { MapPin, Star, ExternalLink, Clock, Phone } from 'lucide-react'
+
 
 const SOURCE_LABEL: Record<string, string> = {
   google: 'Google',
@@ -26,15 +27,27 @@ export default function RestaurantCard({ restaurant: r }: { restaurant: Restaura
           </span>
         </div>
 
-        {r.rating && (
-          <div className="flex items-center gap-1 mb-1">
+        {r.rating && (() => {
+          // place_id を抽出して口コミページに直接リンク
+          const placeId = r.id.startsWith('google_') ? r.id.replace('google_', '') : null
+          const reviewUrl = placeId
+            ? `https://search.google.com/local/reviews?placeid=${placeId}`
+            : r.url ?? '#'
+          return (
+          <a
+            href={reviewUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 mb-1 hover:underline w-fit"
+          >
             <Star size={12} className="text-yellow-400 fill-yellow-400" />
             <span className="text-sm font-medium text-gray-700">{r.rating.toFixed(1)}</span>
             {r.review_count && (
               <span className="text-xs text-gray-400">({r.review_count.toLocaleString()}件)</span>
             )}
-          </div>
-        )}
+          </a>
+          )
+        })()}
 
         {r.genre.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-2">
@@ -47,25 +60,49 @@ export default function RestaurantCard({ restaurant: r }: { restaurant: Restaura
         <div className="flex items-center gap-1 text-xs text-gray-400">
           <MapPin size={10} />
           <span className="truncate">{r.station ?? r.address}</span>
+          {r.distance_m != null && (
+            <span className="ml-auto shrink-0 text-orange-500 font-medium">
+              {r.distance_m < 1000
+                ? `${r.distance_m}m`
+                : `${(r.distance_m / 1000).toFixed(1)}km`}
+            </span>
+          )}
         </div>
 
+        {r.opening_hours_today && (
+          <div className="flex items-start gap-1 mt-1 text-xs text-gray-500">
+            <Clock size={10} className="mt-0.5 shrink-0" />
+            <span>{r.opening_hours_today}</span>
+          </div>
+        )}
         {r.open_now !== undefined && (
           <span className={`text-xs mt-1 inline-block ${r.open_now ? 'text-green-600' : 'text-red-400'}`}>
             {r.open_now ? '● 営業中' : '● 営業時間外'}
           </span>
         )}
 
-        {r.url && (
-          <a
-            href={r.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-2 flex items-center gap-1 text-xs text-orange-500 hover:underline"
-          >
-            <ExternalLink size={10} />
-            詳細を見る
-          </a>
-        )}
+        <div className="mt-2 flex items-center gap-3 flex-wrap">
+          {r.url && (
+            <a
+              href={r.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-orange-500 hover:underline"
+            >
+              <ExternalLink size={10} />
+              詳細を見る
+            </a>
+          )}
+          {r.phone && (
+            <a
+              href={`tel:${r.phone.replace(/[^\d+]/g, '')}`}
+              className="flex items-center gap-1 text-xs text-blue-500 hover:underline"
+            >
+              <Phone size={10} />
+              {r.phone}
+            </a>
+          )}
+        </div>
       </div>
     </div>
   )

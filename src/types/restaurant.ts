@@ -12,16 +12,11 @@ export type Restaurant = {
   lng?: number
   photo_url?: string
   url?: string
-  source: 'google' | 'hotpepper'
+  source: 'google'
+  phone?: string
   open_now?: boolean
-}
-
-export type BlogPost = {
-  title: string
-  url: string
-  summary: string
-  published?: string
-  source_name: string
+  distance_m?: number
+  opening_hours_today?: string
 }
 
 export type SearchParams = {
@@ -35,5 +30,4 @@ export type SearchParams = {
   current_lat?: number   // 現在地
   current_lng?: number
   open_now: boolean
-  sources: string[]
 }

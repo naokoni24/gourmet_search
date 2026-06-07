@@ -20,11 +20,6 @@ const RATINGS = [
   { label: '★4.0以上', value: 4.0 },
   { label: '★4.5以上', value: 4.5 },
 ]
-const SOURCES = [
-  { id: 'google', label: 'Google' },
-  { id: 'hotpepper', label: 'ホットペッパー' },
-  { id: 'blog', label: 'ブログ' },
-]
 
 type Props = { onSearch: (p: SearchParams) => void; loading: boolean }
 
@@ -36,17 +31,7 @@ export default function SearchFilter({ onSearch, loading }: Props) {
     genre: '',
     radius: 500,
     open_now: false,
-    sources: ['google', 'hotpepper', 'blog'],
   })
-
-  const toggleSource = (id: string) => {
-    setParams(p => ({
-      ...p,
-      sources: p.sources.includes(id)
-        ? p.sources.filter(s => s !== id)
-        : [...p.sources, id],
-    }))
-  }
 
   const [locating, setLocating] = useState(false)
   const [locError, setLocError] = useState<string | null>(null)
@@ -164,7 +149,7 @@ export default function SearchFilter({ onSearch, loading }: Props) {
 
       <div>
         <label className="text-xs text-gray-500 mb-1 flex justify-between">
-          <span>駅からの距離</span>
+          <span>{params.current_lat ? '現在地からの距離' : '駅からの距離'}</span>
           <span className="font-medium text-orange-500">{params.radius ? `${params.radius}m以内` : '指定なし'}</span>
         </label>
         <input
@@ -176,8 +161,11 @@ export default function SearchFilter({ onSearch, loading }: Props) {
           onChange={e => set('radius', Number(e.target.value) || undefined)}
           className="w-full accent-orange-500"
         />
-        <div className="flex justify-between text-xs text-gray-400 mt-0.5">
-          <span>指定なし</span><span>500m</span><span>1km</span><span>2km</span>
+        <div className="relative text-xs text-gray-400 mt-0.5 h-4">
+          <span className="absolute left-0">指定なし</span>
+          <span className="absolute" style={{ left: '25%', transform: 'translateX(-50%)' }}>500m</span>
+          <span className="absolute" style={{ left: '50%', transform: 'translateX(-50%)' }}>1km</span>
+          <span className="absolute right-0">2km</span>
         </div>
       </div>
 
@@ -211,23 +199,6 @@ export default function SearchFilter({ onSearch, loading }: Props) {
           />
           今すぐ営業中のみ
         </label>
-      </div>
-
-      <div>
-        <p className="text-xs text-gray-500 mb-2">取得ソース</p>
-        <div className="flex flex-col gap-1">
-          {SOURCES.map(s => (
-            <label key={s.id} className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={params.sources.includes(s.id)}
-                onChange={() => toggleSource(s.id)}
-                className="accent-orange-500"
-              />
-              {s.label}
-            </label>
-          ))}
-        </div>
       </div>
 
       <button

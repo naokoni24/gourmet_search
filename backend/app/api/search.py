@@ -1,12 +1,11 @@
 from fastapi import APIRouter, Query
 from typing import Optional
 import os
-import asyncio
 import math
 import httpx
 
 from app.models.restaurant import Restaurant, SearchParams
-from app.crawlers import google_places, hotpepper, blog_rss
+from app.crawlers import google_places
 
 router = APIRouter()
 
@@ -45,51 +44,34 @@ async def search(
     current_lat: Optional[float] = Query(None, description="現在地緯度"),
     current_lng: Optional[float] = Query(None, description="現在地経度"),
     open_now: bool = Query(False, description="今すぐ営業中"),
-    sources: str = Query("google,hotpepper,blog", description="取得ソース"),
 ):
-    source_list = sources.split(",")
     query = f"{station} {area} {genre} {keyword}".strip()
-
     google_key = os.getenv("GOOGLE_PLACES_API_KEY", "")
-    hp_key = os.getenv("HOTPEPPER_API_KEY", "")
-
-    async def empty():
-        return []
 
     # 現在地が指定されている場合はそのまま使用、駅名の場合はジオコーディング
     location = None
     if current_lat is not None and current_lng is not None:
         location = f"{current_lat},{current_lng}"
-    elif station and radius and google_key:
+    elif station and google_key:
         location = await _geocode_station(station, google_key)
 
-    tasks = []
-    if "google" in source_list and google_key:
-        tasks.append(google_places.search_restaurants(
-            query, google_key, count=60,
-            location=location or "",
-            radius=radius or 1500,
-        ))
-    else:
-        tasks.append(empty())
+    # 現在地検索時は radius 未指定でも 1000m をデフォルトに
+    effective_radius = radius
+    if current_lat is not None and effective_radius is None:
+        effective_radius = 1000
 
-    if "hotpepper" in source_list and hp_key:
-        tasks.append(hotpepper.search_restaurants(
-            keyword=keyword, api_key=hp_key,
-            area=area, station=station, genre=genre,
-            location=location or "",
-            radius=radius or 1000,
-            count=300,
-        ))
-    else:
-        tasks.append(empty())
-
-    if "blog" in source_list:
-        tasks.append(blog_rss.search_blog_posts(keyword=f"{area} {keyword}".strip(), area=area))
-    else:
-        tasks.append(empty())
-
-    google_results, hp_results, blog_results = await asyncio.gather(*tasks, return_exceptions=True)
+    results: list[Restaurant] = []
+    if google_key:
+        try:
+            results = await google_places.search_restaurants(
+                query, google_key, count=60,
+                location=location or "",
+                radius=effective_radius or 1500,
+                keyword=keyword,
+                genre=genre,
+            )
+        except Exception:
+            results = []
 
     def make_dist_fn(loc: str):
         lat0, lng0 = map(float, loc.split(","))
@@ -102,34 +84,33 @@ async def search(
             return 6371000 * 2 * math.asin(math.sqrt(a))
         return dist_m
 
-    dist_fn = make_dist_fn(location) if (location and radius) else None
+    dist_fn = make_dist_fn(location) if location else None
 
     def filter_list(items: list[Restaurant]) -> list[Restaurant]:
-        if dist_fn and radius:
-            items = [r for r in items if dist_fn(r) <= radius]
+        if dist_fn and effective_radius:
+            items = [r for r in items if dist_fn(r) <= effective_radius]
         if rating_min is not None:
             items = [r for r in items if r.rating and r.rating >= rating_min]
         if open_now:
             items = [r for r in items if r.open_now is True]
+        if dist_fn:
+            for r in items:
+                r.distance_m = round(dist_fn(r))
         return items
 
-    google_list = sorted(
-        filter_list(google_results if isinstance(google_results, list) else []),
+    restaurants = sorted(
+        filter_list(results),
         key=lambda r: r.rating or 0, reverse=True
     )[:60]
 
-    hp_list = filter_list(hp_results if isinstance(hp_results, list) else [])
-
-    # Google(評価順60件) + Hotpepper を評価順でマージ
-    restaurants: list[Restaurant] = sorted(
-        google_list + hp_list,
-        key=lambda r: r.rating or 0, reverse=True
-    )
-
-    blogs = blog_results if isinstance(blog_results, list) else []
-
     return {
         "restaurants": restaurants,
-        "blogs": blogs,
         "total": len(restaurants),
+        "debug": {
+            "location": location,
+            "effective_radius": effective_radius,
+            "current_lat": current_lat,
+            "current_lng": current_lng,
+            "station": station,
+        },
     }
