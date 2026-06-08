@@ -59,9 +59,13 @@ async def search(
         effective_radius = 1500
 
     # クエリ構築：全ケースText Search
-    # ジャンル・キーワードなし → 駅名だけでlocationBiasを活用
+    # ジャンル・キーワードなし → "駅名 グルメ" で飲食店を広くヒット
     # ジャンルあり → "阿佐ヶ谷 焼肉" のように組み合わせ
-    query = f"{place} {genre} {keyword}".strip() or place or "飲食店"
+    base_query = f"{place} {genre} {keyword}".strip()
+    if base_query and not genre and not keyword:
+        query = f"{base_query} グルメ"
+    else:
+        query = base_query or "飲食店"
 
     results: list[Restaurant] = []
     if google_key:
