@@ -35,7 +35,6 @@ PLACE_FIELD_MASK = ",".join([
     "places.rating",
     "places.userRatingCount",
     "places.location",
-    "places.photos",
     "places.primaryType",
     "places.primaryTypeDisplayName",
     "places.googleMapsUri",
@@ -46,16 +45,10 @@ TEXT_FIELD_MASK = ",".join([
     "nextPageToken",
 ])
 
-def _parse_places(data: dict, api_key: str) -> list[Restaurant]:
+def _parse_places(data: dict, _api_key: str) -> list[Restaurant]:
     results = []
     for p in data.get("places", []):
         place_id = p.get("id", "")
-        photos = p.get("photos", [])
-        photo_url = (
-            f"https://places.googleapis.com/v1/{photos[0]['name']}/media"
-            f"?maxWidthPx=400&key={api_key}"
-            if photos else None
-        )
         loc = p.get("location", {})
         primary_type = p.get("primaryType", "")
         type_display = p.get("primaryTypeDisplayName", {}).get("text", "")
@@ -69,7 +62,7 @@ def _parse_places(data: dict, api_key: str) -> list[Restaurant]:
             review_count=p.get("userRatingCount"),
             lat=loc.get("latitude"),
             lng=loc.get("longitude"),
-            photo_url=photo_url,
+            photo_url=None,
             url=p.get("googleMapsUri"),
             source="google",
         ))

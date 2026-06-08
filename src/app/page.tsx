@@ -121,8 +121,8 @@ export default function Home() {
                     店舗 {restaurants.length}件
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {restaurants.map((r, index) => (
-                      <RestaurantCard key={r.id} restaurant={r} showPhoto={index < 30} />
+                    {restaurants.map(r => (
+                      <RestaurantCard key={r.id} restaurant={r} />
                     ))}
                   </div>
                 </section>
