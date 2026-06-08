@@ -126,7 +126,6 @@ async def search_restaurants(
     location: str = "",
     radius: int = 1500,
     count: int = 60,
-    included_type: str = "",
 ) -> list[Restaurant]:
     """Text Search（全ケース共通）"""
     headers = {
@@ -141,9 +140,6 @@ async def search_restaurants(
         "languageCode": "ja",
         "maxResultCount": 20,
     }
-    # ジャンル・キーワード未指定の場合は includedType で飲食店に絞る（クエリに"飲食店"を入れるより精度が高い）
-    if included_type:
-        base_body["includedType"] = included_type
     if location:
         lat, lng = location.split(",")
         api_radius = max(radius * 1.5, 2000)
