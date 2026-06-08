@@ -26,8 +26,7 @@ type Props = { onSearch: (p: SearchParams) => void; loading: boolean }
 export default function SearchFilter({ onSearch, loading }: Props) {
   const [params, setParams] = useState<SearchParams>({
     keyword: '',
-    area: '',
-    station: '',
+    place: '',
     genre: '',
     radius: 300,
   })
@@ -38,7 +37,6 @@ export default function SearchFilter({ onSearch, loading }: Props) {
 
   const set = (key: keyof SearchParams, value: unknown) =>
     setParams(p => ({ ...p, [key]: value }))
-
 
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
@@ -53,8 +51,7 @@ export default function SearchFilter({ onSearch, loading }: Props) {
           ...p,
           current_lat: pos.coords.latitude,
           current_lng: pos.coords.longitude,
-          station: '',  // 駅指定をクリア
-          area: '',
+          place: '',
         }))
         setLocating(false)
       },
@@ -94,18 +91,8 @@ export default function SearchFilter({ onSearch, loading }: Props) {
       </div>
 
       <div>
-        <label className="text-xs text-gray-500 mb-1 block">エリア</label>
-        <input
-          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 text-[16px]"
-          placeholder="例：渋谷、銀座"
-          value={params.area}
-          onChange={e => set('area', e.target.value)}
-        />
-      </div>
-
-      <div>
         <div className="flex items-center justify-between mb-1">
-          <label className="text-xs text-gray-500">駅 / 現在地</label>
+          <label className="text-xs text-gray-500">駅名・エリア / 現在地</label>
           {!params.current_lat && (
             <button
               onClick={getCurrentLocation}
@@ -132,9 +119,9 @@ export default function SearchFilter({ onSearch, loading }: Props) {
         ) : (
           <input
             className="w-full border border-gray-200 rounded-lg px-3 py-2 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 text-[16px]"
-            placeholder="例：新宿、渋谷"
-            value={params.station}
-            onChange={e => set('station', e.target.value)}
+            placeholder="例：阿佐ヶ谷、渋谷、新宿"
+            value={params.place}
+            onChange={e => set('place', e.target.value)}
           />
         )}
         {locError && <p className="text-xs text-red-500 mt-1">{locError}</p>}
@@ -153,7 +140,7 @@ export default function SearchFilter({ onSearch, loading }: Props) {
 
       <div>
         <label className="text-xs text-gray-500 mb-1 flex justify-between">
-          <span>{params.current_lat ? '現在地からの距離' : '駅からの距離'}</span>
+          <span>{params.current_lat ? '現在地からの距離' : '駅・エリアからの距離'}</span>
           <span className="font-medium text-orange-500">{params.radius ? `${params.radius}m以内` : '300m以内'}</span>
         </label>
         <input
@@ -192,8 +179,6 @@ export default function SearchFilter({ onSearch, loading }: Props) {
           {RATINGS.map(r => <option key={r.label} value={r.value ?? ''}>{r.label}</option>)}
         </select>
       </div>
-
-
 
       <button
         onClick={() => { onSearch(params); setOpen(false) }}

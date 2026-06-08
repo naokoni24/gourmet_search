@@ -19,8 +19,7 @@ export default function Home() {
     try {
       const query = new URLSearchParams({
         keyword: params.keyword,
-        area: params.area,
-        station: params.station,
+        place: params.place,
         genre: params.genre,
 ...(params.budget_max ? { budget_max: String(params.budget_max) } : {}),
         ...(params.rating_min ? { rating_min: String(params.rating_min) } : {}),

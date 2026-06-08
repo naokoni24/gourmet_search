@@ -18,8 +18,7 @@ export type Restaurant = {
 
 export type SearchParams = {
   keyword: string
-  area: string
-  station: string
+  place: string        // エリア・駅名を統合
   genre: string
   budget_max?: number
   rating_min?: number

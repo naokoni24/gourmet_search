@@ -34,8 +34,7 @@ async def _geocode_station(station: str, api_key: str) -> Optional[str]:
 @router.get("/search")
 async def search(
     keyword: str = Query("", description="キーワード"),
-    area: str = Query("", description="エリア（例：渋谷）"),
-    station: str = Query("", description="最寄り駅（例：新宿駅）"),
+    place: str = Query("", description="駅名・エリア（例：阿佐ヶ谷、渋谷）"),
     genre: str = Query("", description="ジャンル（例：ラーメン）"),
     budget_max: Optional[int] = Query(None, description="予算上限"),
     rating_min: Optional[float] = Query(None, description="最低評価"),
@@ -43,27 +42,26 @@ async def search(
     current_lat: Optional[float] = Query(None, description="現在地緯度"),
     current_lng: Optional[float] = Query(None, description="現在地経度"),
 ):
-    place = f"{station} {area}".strip()
     google_key = os.getenv("GOOGLE_PLACES_API_KEY", "")
 
     location = None
     if current_lat is not None and current_lng is not None:
         location = f"{current_lat},{current_lng}"
-    elif station and google_key:
-        location = await _geocode_station(station, google_key)
+    elif place and google_key:
+        location = await _geocode_station(place, google_key)
 
     effective_radius = radius
     if current_lat is not None and effective_radius is None:
         effective_radius = 1000
-    elif station and location and effective_radius is None:
+    elif place and location and effective_radius is None:
         effective_radius = 1500
 
     # クエリ構築：全ケースText Search
     # ジャンル・キーワードなし → "駅名 グルメ" で飲食店を広くヒット
     # ジャンルあり → "阿佐ヶ谷 焼肉" のように組み合わせ
     base_query = f"{place} {genre} {keyword}".strip()
-    if base_query and not genre and not keyword:
-        query = f"{base_query} グルメ"
+    if place and not genre and not keyword:
+        query = f"{place} グルメ"
     else:
         query = base_query or "飲食店"
 
