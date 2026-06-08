@@ -73,7 +73,7 @@ export default function RestaurantCard({ restaurant: r }: Props) {
             className="mb-2 inline-flex items-center gap-2 rounded-lg border border-yellow-200 bg-yellow-50 px-2.5 py-1.5 text-sm text-gray-700 transition-colors hover:bg-yellow-100"
           >
             <Star size={12} className="text-yellow-400 fill-yellow-400" />
-            <span className="font-medium">Googleの口コミ</span>
+            <span className="font-medium">口コミを見る</span>
             <span className="font-semibold text-gray-800">{r.rating.toFixed(1)}</span>
             {r.review_count && (
               <span className="text-xs text-gray-500">({r.review_count.toLocaleString()}件)</span>
@@ -111,7 +111,7 @@ export default function RestaurantCard({ restaurant: r }: Props) {
               rel="noopener noreferrer"
               className="flex w-full items-center justify-between rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-sm font-medium text-orange-700 transition-colors hover:bg-orange-100"
             >
-              <span>Googleで店舗詳細を見る</span>
+              <span>店舗詳細を見る</span>
               <ExternalLink size={14} />
             </a>
           </div>
