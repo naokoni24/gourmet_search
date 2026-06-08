@@ -29,7 +29,7 @@ export default function SearchFilter({ onSearch, loading }: Props) {
     area: '',
     station: '',
     genre: '',
-    radius: 500,
+    radius: undefined,
   })
 
   const [locating, setLocating] = useState(false)

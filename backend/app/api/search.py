@@ -55,7 +55,9 @@ async def search(
 
     effective_radius = radius
     if current_lat is not None and effective_radius is None:
-        effective_radius = 1000
+        effective_radius = 1000  # 現在地検索のデフォルト
+    elif station and location and effective_radius is None:
+        effective_radius = 1500  # 駅名検索のデフォルト
 
     results: list[Restaurant] = []
     if google_key:
