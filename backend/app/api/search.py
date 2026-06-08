@@ -2,6 +2,7 @@ from fastapi import APIRouter, Query
 from typing import Optional
 import os
 import math
+import asyncio
 
 from app.models.restaurant import Restaurant
 from app.crawlers import google_places
@@ -31,6 +32,9 @@ async def _geocode_station(station: str, api_key: str) -> Optional[str]:
         pass
     return None
 
+# ジャンル未指定の場合に並列検索するクエリ群（代表的な食事カテゴリを網羅）
+BROAD_FOOD_QUERIES = ["グルメ", "ランチ", "居酒屋 焼肉 ラーメン"]
+
 @router.get("/search")
 async def search(
     keyword: str = Query("", description="キーワード"),
@@ -56,23 +60,36 @@ async def search(
     elif place and location and effective_radius is None:
         effective_radius = 1500
 
-    # クエリ構築：全ケースText Search
-    # ジャンル・キーワードなし → "駅名 グルメ" で飲食店を広くヒット
-    # ジャンルあり → "阿佐ヶ谷 焼肉" のように組み合わせ
-    base_query = f"{place} {genre} {keyword}".strip()
-    if place and not genre and not keyword:
-        query = f"{place} グルメ"
-    else:
-        query = base_query or "飲食店"
-
     results: list[Restaurant] = []
     if google_key:
         try:
-            results = await google_places.search_restaurants(
-                query, google_key, count=60,
-                location=location or "",
-                radius=effective_radius or 1500,
-            )
+            if place and not genre and not keyword:
+                # ジャンル未指定：複数クエリを並列実行してマージ（漏れを防ぐ）
+                tasks = [
+                    google_places.search_restaurants(
+                        f"{place} {food_q}", google_key, count=20,
+                        location=location or "",
+                        radius=effective_radius or 1500,
+                    )
+                    for food_q in BROAD_FOOD_QUERIES
+                ]
+                all_results = await asyncio.gather(*tasks, return_exceptions=True)
+                seen_ids: set[str] = set()
+                for r_list in all_results:
+                    if isinstance(r_list, Exception):
+                        continue
+                    for r in r_list:
+                        if r.id not in seen_ids:
+                            seen_ids.add(r.id)
+                            results.append(r)
+            else:
+                # ジャンル・キーワードあり：1クエリで十分
+                query = f"{place} {genre} {keyword}".strip() or "飲食店"
+                results = await google_places.search_restaurants(
+                    query, google_key, count=60,
+                    location=location or "",
+                    radius=effective_radius or 1500,
+                )
         except Exception as e:
             import traceback
             print(f"[search error] {e}")
