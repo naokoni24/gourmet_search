@@ -91,10 +91,10 @@ async def search_restaurants(
         "Accept-Language": "ja",
     }
 
-    food_words = ["レストラン", "飲食", "ラーメン", "寿司", "焼肉", "カフェ", "居酒屋",
+    food_words = ["グルメ", "飲食", "レストラン", "ラーメン", "寿司", "焼肉", "カフェ", "居酒屋",
                   "restaurant", "ramen", "sushi", "cafe", "food", "lunch", "dinner"]
     has_food_word = any(w in query.lower() for w in food_words)
-    effective_query = query if has_food_word else f"{query} レストラン"
+    effective_query = query if has_food_word else f"{query} グルメ"
 
     base_body: dict = {
         "textQuery": effective_query,
