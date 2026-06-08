@@ -102,15 +102,15 @@ export default function RestaurantCard({ restaurant: r }: Props) {
         </div>
 
         {r.url && (
-          <div className="mt-2">
+          <div className="mt-3">
             <a
               href={r.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-xs text-orange-500 hover:underline w-fit"
+              className="flex w-full items-center justify-between rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-sm font-medium text-orange-700 transition-colors hover:bg-orange-100"
             >
-              <ExternalLink size={10} />
-              詳細を見る
+              <span>Googleで店舗詳細を見る</span>
+              <ExternalLink size={14} />
             </a>
           </div>
         )}
