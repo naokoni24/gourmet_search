@@ -2,15 +2,11 @@ from fastapi import APIRouter, Query
 from typing import Optional
 import os
 import math
-import asyncio
 
 from app.models.restaurant import Restaurant
 from app.crawlers import google_places
 
 router = APIRouter()
-
-# ジャンル未指定時に並列検索するカテゴリ群
-ALL_GENRE_QUERIES = ["グルメ 飲食", "焼肉 居酒屋 和食", "ラーメン カフェ 洋食"]
 
 async def _geocode_station(station: str, api_key: str) -> Optional[str]:
     """駅名 → "lat,lng" 文字列に変換（Places API Text Search を利用）"""
@@ -66,32 +62,12 @@ async def search(
     results: list[Restaurant] = []
     if google_key:
         try:
-            # ジャンル・キーワード指定あり → 1回検索
-            if genre or keyword:
-                query = f"{place} {genre} {keyword}".strip()
-                results = await google_places.search_restaurants(
-                    query, google_key, count=60,
-                    location=location or "",
-                    radius=effective_radius or 1500,
-                )
-            # ジャンル・キーワード未指定 → カテゴリ並列検索してマージ
-            else:
-                tasks = [
-                    google_places.search_restaurants(
-                        f"{place} {cat}".strip(), google_key, count=20,
-                        location=location or "",
-                        radius=effective_radius or 1500,
-                    )
-                    for cat in ALL_GENRE_QUERIES
-                ]
-                batches = await asyncio.gather(*tasks, return_exceptions=True)
-                seen_ids: set[str] = set()
-                for batch in batches:
-                    if isinstance(batch, list):
-                        for r in batch:
-                            if r.id not in seen_ids:
-                                seen_ids.add(r.id)
-                                results.append(r)
+            query = f"{place} {genre} {keyword}".strip() or "飲食店"
+            results = await google_places.search_restaurants(
+                query, google_key, count=60,
+                location=location or "",
+                radius=effective_radius or 1500,
+            )
         except Exception:
             results = []
 
