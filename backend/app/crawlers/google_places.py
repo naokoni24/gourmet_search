@@ -5,14 +5,16 @@ from app.models.restaurant import Restaurant
 TEXT_SEARCH_URL = "https://places.googleapis.com/v1/places:searchText"
 NEARBY_SEARCH_URL = "https://places.googleapis.com/v1/places:searchNearby"
 
-# Nearby Search で対象にする飲食カテゴリ
-FOOD_TYPES = [
-    "restaurant", "cafe", "bar", "japanese_restaurant", "ramen_restaurant",
-    "sushi_restaurant", "chinese_restaurant", "korean_restaurant",
-    "italian_restaurant", "steak_house", "barbecue_restaurant",
-    "yakitori_restaurant", "japanese_izakaya_restaurant", "tonkatsu_restaurant",
-    "tempura_restaurant", "hamburger_restaurant", "pizza_restaurant",
-    "fast_food_restaurant", "meal_takeaway",
+# ジャンル未指定時：2グループに分けて並列検索し漏れを防ぐ
+FOOD_TYPE_GROUPS = [
+    # グループA：和食・麺・カフェ系
+    ["japanese_restaurant", "ramen_restaurant", "sushi_restaurant",
+     "yakitori_restaurant", "tonkatsu_restaurant", "tempura_restaurant",
+     "cafe", "fast_food_restaurant", "meal_takeaway"],
+    # グループB：焼肉・居酒屋・洋食・その他
+    ["barbecue_restaurant", "korean_restaurant", "japanese_izakaya_restaurant",
+     "chinese_restaurant", "italian_restaurant", "steak_house",
+     "hamburger_restaurant", "pizza_restaurant", "bar", "restaurant"],
 ]
 
 TYPE_MAP = {
@@ -78,11 +80,11 @@ def _parse_places(data: dict, api_key: str) -> list[Restaurant]:
         ))
     return results
 
-async def search_nearby(
-    api_key: str, location: str, radius: int,
-    included_types: list[str] | None = None,
+async def _nearby_one_group(
+    client: httpx.AsyncClient, api_key: str,
+    location: str, radius: int, included_types: list[str],
 ) -> list[Restaurant]:
-    """Nearby Search で周辺の飲食店を網羅取得（最大60件）"""
+    """1グループ分のNearby Search（最大20件）"""
     lat, lng = location.split(",")
     headers = {
         "Content-Type": "application/json",
@@ -90,8 +92,8 @@ async def search_nearby(
         "X-Goog-FieldMask": FIELD_MASK,
         "Accept-Language": "ja",
     }
-    base_body: dict = {
-        "includedTypes": included_types or FOOD_TYPES,
+    body = {
+        "includedTypes": included_types,
         "maxResultCount": 20,
         "rankPreference": "POPULARITY",
         "locationRestriction": {
@@ -101,21 +103,34 @@ async def search_nearby(
             }
         },
     }
-    results: list[Restaurant] = []
-    page_token: str | None = None
+    res = await client.post(NEARBY_SEARCH_URL, json=body, headers=headers)
+    return _parse_places(res.json(), api_key)
+
+async def search_nearby(
+    api_key: str, location: str, radius: int,
+    included_types: list[str] | None = None,
+) -> list[Restaurant]:
+    """Nearby Search で周辺の飲食店を網羅取得"""
     async with httpx.AsyncClient(timeout=30.0) as client:
-        for _ in range(3):  # 最大3ページ（60件）
-            body = {**base_body}
-            if page_token:
-                body["pageToken"] = page_token
-            res = await client.post(NEARBY_SEARCH_URL, json=body, headers=headers)
-            data = res.json()
-            results.extend(_parse_places(data, api_key))
-            page_token = data.get("nextPageToken")
-            if not page_token:
-                break
-            await asyncio.sleep(2)
-    return results
+        if included_types:
+            # ジャンル指定あり：1グループで検索
+            return await _nearby_one_group(client, api_key, location, radius, included_types)
+        else:
+            # ジャンル未指定：2グループ並列検索してマージ（漏れ防止）
+            tasks = [
+                _nearby_one_group(client, api_key, location, radius, group)
+                for group in FOOD_TYPE_GROUPS
+            ]
+            batches = await asyncio.gather(*tasks, return_exceptions=True)
+            seen: set[str] = set()
+            results: list[Restaurant] = []
+            for batch in batches:
+                if isinstance(batch, list):
+                    for r in batch:
+                        if r.id not in seen:
+                            seen.add(r.id)
+                            results.append(r)
+            return results
 
 async def search_restaurants(
     query: str,
