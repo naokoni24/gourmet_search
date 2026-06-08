@@ -79,15 +79,15 @@ def _parse_places(data: dict, api_key: str) -> list[Restaurant]:
     return results
 
 async def search_nearby(api_key: str, location: str, radius: int) -> list[Restaurant]:
-    """ジャンル未指定時：Nearby Search で周辺の全飲食店を網羅取得"""
+    """ジャンル未指定時：Nearby Search で周辺の全飲食店を網羅取得（最大60件）"""
     lat, lng = location.split(",")
     headers = {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": api_key,
-        "X-Goog-FieldMask": FIELD_MASK.replace("nextPageToken,", "").replace(",nextPageToken", ""),
+        "X-Goog-FieldMask": FIELD_MASK,
         "Accept-Language": "ja",
     }
-    body = {
+    base_body: dict = {
         "includedTypes": FOOD_TYPES,
         "maxResultCount": 20,
         "rankPreference": "POPULARITY",
@@ -99,10 +99,19 @@ async def search_nearby(api_key: str, location: str, radius: int) -> list[Restau
         },
     }
     results: list[Restaurant] = []
+    page_token: str | None = None
     async with httpx.AsyncClient(timeout=30.0) as client:
-        res = await client.post(NEARBY_SEARCH_URL, json=body, headers=headers)
-        data = res.json()
-        results.extend(_parse_places(data, api_key))
+        for _ in range(3):  # 最大3ページ（60件）
+            body = {**base_body}
+            if page_token:
+                body["pageToken"] = page_token
+            res = await client.post(NEARBY_SEARCH_URL, json=body, headers=headers)
+            data = res.json()
+            results.extend(_parse_places(data, api_key))
+            page_token = data.get("nextPageToken")
+            if not page_token:
+                break
+            await asyncio.sleep(2)
     return results
 
 async def search_restaurants(
