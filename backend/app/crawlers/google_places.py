@@ -77,9 +77,9 @@ def _parse_places(data: dict, api_key: str) -> list[Restaurant]:
 
 async def _nearby_one_group(
     client: httpx.AsyncClient, api_key: str,
-    location: str, radius: int, included_types: list[str],
+    location: str, radius: int, included_types: list[str], max_pages: int,
 ) -> list[Restaurant]:
-    """Nearby Search（最大60件、3ページ）"""
+    """Nearby Search（1ページ20件、最大3ページ）"""
     lat, lng = location.split(",")
     headers = {
         "Content-Type": "application/json",
@@ -100,7 +100,7 @@ async def _nearby_one_group(
     }
     results: list[Restaurant] = []
     page_token: str | None = None
-    for _ in range(3):
+    for _ in range(max_pages):
         body = {**base_body}
         if page_token:
             body["pageToken"] = page_token
@@ -122,12 +122,14 @@ async def _nearby_one_group(
 async def search_nearby(
     api_key: str, location: str, radius: int,
     included_types: list[str] | None = None,
+    max_pages: int = 3,
 ) -> list[Restaurant]:
     """Nearby Search で周辺の飲食店を取得（最大60件）"""
     async with httpx.AsyncClient(timeout=30.0) as client:
         return await _nearby_one_group(
             client, api_key, location, radius,
             included_types or ALL_FOOD_TYPES,
+            max_pages=max(1, min(max_pages, 3)),
         )
 
 async def search_restaurants(

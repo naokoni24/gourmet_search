@@ -6,14 +6,27 @@ const SOURCE_LABEL: Record<string, string> = {
   google: 'Google',
 }
 
-export default function RestaurantCard({ restaurant: r }: { restaurant: Restaurant }) {
+type Props = {
+  restaurant: Restaurant
+  showPhoto?: boolean
+}
+
+export default function RestaurantCard({ restaurant: r, showPhoto = true }: Props) {
+  const photoUrl = showPhoto ? r.photo_url : null
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-      {r.photo_url && (
+      {photoUrl && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={r.photo_url} alt={r.name} className="w-full h-36 object-cover" />
+        <img
+          src={photoUrl}
+          alt={r.name}
+          loading="lazy"
+          decoding="async"
+          className="w-full h-36 object-cover"
+        />
       )}
-      {!r.photo_url && (
+      {!photoUrl && (
         <div className="w-full h-36 bg-gray-100 flex items-center justify-center text-gray-300 text-4xl">
           🍽
         </div>
