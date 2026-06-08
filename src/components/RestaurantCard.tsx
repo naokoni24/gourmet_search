@@ -70,13 +70,15 @@ export default function RestaurantCard({ restaurant: r }: Props) {
             href={reviewUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1 mb-1 hover:underline w-fit"
+            className="mb-2 inline-flex items-center gap-2 rounded-lg border border-yellow-200 bg-yellow-50 px-2.5 py-1.5 text-sm text-gray-700 transition-colors hover:bg-yellow-100"
           >
             <Star size={12} className="text-yellow-400 fill-yellow-400" />
-            <span className="text-sm font-medium text-gray-700">{r.rating.toFixed(1)}</span>
+            <span className="font-medium">Googleの口コミ</span>
+            <span className="font-semibold text-gray-800">{r.rating.toFixed(1)}</span>
             {r.review_count && (
-              <span className="text-xs text-gray-400">({r.review_count.toLocaleString()}件)</span>
+              <span className="text-xs text-gray-500">({r.review_count.toLocaleString()}件)</span>
             )}
+            <ExternalLink size={12} className="text-gray-500" />
           </a>
           )
         })()}
