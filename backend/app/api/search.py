@@ -8,8 +8,23 @@ from app.crawlers import google_places
 
 router = APIRouter()
 
+# ジャンル → Nearby Search の includedTypes マッピング
+GENRE_TO_TYPES: dict[str, list[str]] = {
+    "和食":     ["japanese_restaurant", "sushi_restaurant", "tempura_restaurant",
+                 "tonkatsu_restaurant", "shabu_shabu_restaurant", "sukiyaki_restaurant"],
+    "洋食":     ["western_restaurant", "american_restaurant", "french_restaurant",
+                 "italian_restaurant", "steak_house", "hamburger_restaurant"],
+    "イタリアン": ["italian_restaurant", "pizza_restaurant"],
+    "中華":     ["chinese_restaurant"],
+    "ラーメン":  ["ramen_restaurant", "noodle_restaurant"],
+    "居酒屋":   ["japanese_izakaya_restaurant", "izakaya", "bar"],
+    "焼肉":     ["barbecue_restaurant", "yakiniku_restaurant", "korean_restaurant"],
+    "カフェ":   ["cafe", "coffee_shop"],
+    "バー":     ["bar"],
+    "韓国料理": ["korean_restaurant"],
+}
+
 async def _geocode_station(station: str, api_key: str) -> Optional[str]:
-    """駅名 → "lat,lng" 文字列に変換（Places API Text Search を利用）"""
     import httpx
     try:
         headers = {
@@ -55,25 +70,28 @@ async def search(
 
     effective_radius = radius
     if current_lat is not None and effective_radius is None:
-        effective_radius = 1000  # 現在地検索のデフォルト
+        effective_radius = 1000
     elif station and location and effective_radius is None:
-        effective_radius = 1500  # 駅名検索のデフォルト
+        effective_radius = 1500
 
     results: list[Restaurant] = []
     if google_key:
         try:
-            if (genre or keyword) or not location:
-                # キーワード/ジャンル指定あり、または位置情報なし → Text Search
+            genre_types = GENRE_TO_TYPES.get(genre, [])
+
+            if location and (not keyword):
+                # 位置情報あり・フリーキーワードなし → Nearby Search（網羅性重視）
+                results = await google_places.search_nearby(
+                    google_key, location,
+                    radius=effective_radius or 1500,
+                    included_types=genre_types or None,  # ジャンル指定あれば絞り込み
+                )
+            else:
+                # フリーキーワードあり、または位置情報なし → Text Search
                 query = f"{place} {genre} {keyword}".strip() or "飲食店"
                 results = await google_places.search_restaurants(
                     query, google_key, count=60,
                     location=location or "",
-                    radius=effective_radius or 1500,
-                )
-            else:
-                # 位置情報あり・ジャンル未指定 → Nearby Search（全飲食店を網羅）
-                results = await google_places.search_nearby(
-                    google_key, location,
                     radius=effective_radius or 1500,
                 )
         except Exception:

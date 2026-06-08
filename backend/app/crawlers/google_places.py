@@ -78,8 +78,11 @@ def _parse_places(data: dict, api_key: str) -> list[Restaurant]:
         ))
     return results
 
-async def search_nearby(api_key: str, location: str, radius: int) -> list[Restaurant]:
-    """ジャンル未指定時：Nearby Search で周辺の全飲食店を網羅取得（最大60件）"""
+async def search_nearby(
+    api_key: str, location: str, radius: int,
+    included_types: list[str] | None = None,
+) -> list[Restaurant]:
+    """Nearby Search で周辺の飲食店を網羅取得（最大60件）"""
     lat, lng = location.split(",")
     headers = {
         "Content-Type": "application/json",
@@ -88,7 +91,7 @@ async def search_nearby(api_key: str, location: str, radius: int) -> list[Restau
         "Accept-Language": "ja",
     }
     base_body: dict = {
-        "includedTypes": FOOD_TYPES,
+        "includedTypes": included_types or FOOD_TYPES,
         "maxResultCount": 20,
         "rankPreference": "POPULARITY",
         "locationRestriction": {
