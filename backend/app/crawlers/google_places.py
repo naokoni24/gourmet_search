@@ -93,7 +93,7 @@ async def search_nearby(
     base_body: dict = {
         "includedTypes": included_types or FOOD_TYPES,
         "maxResultCount": 20,
-        "rankPreference": "POPULARITY",
+        "rankPreference": "DISTANCE",
         "locationRestriction": {
             "circle": {
                 "center": {"latitude": float(lat), "longitude": float(lng)},
