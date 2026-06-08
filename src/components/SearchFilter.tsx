@@ -29,7 +29,7 @@ export default function SearchFilter({ onSearch, loading }: Props) {
     area: '',
     station: '',
     genre: '',
-    radius: undefined,
+    radius: 1500,
   })
 
   const [locating, setLocating] = useState(false)
@@ -154,21 +154,21 @@ export default function SearchFilter({ onSearch, loading }: Props) {
       <div>
         <label className="text-xs text-gray-500 mb-1 flex justify-between">
           <span>{params.current_lat ? '現在地からの距離' : '駅からの距離'}</span>
-          <span className="font-medium text-orange-500">{params.radius ? `${params.radius}m以内` : '指定なし'}</span>
+          <span className="font-medium text-orange-500">{params.radius ? `${params.radius}m以内` : '1500m以内'}</span>
         </label>
         <input
           type="range"
-          min={0}
+          min={100}
           max={2000}
           step={100}
-          value={params.radius ?? 0}
-          onChange={e => set('radius', Number(e.target.value) || undefined)}
+          value={params.radius ?? 1500}
+          onChange={e => set('radius', Number(e.target.value))}
           className="w-full accent-orange-500"
         />
         <div className="relative text-xs text-gray-400 mt-0.5 h-4">
-          <span className="absolute left-0">指定なし</span>
-          <span className="absolute" style={{ left: '25%', transform: 'translateX(-50%)' }}>500m</span>
-          <span className="absolute" style={{ left: '50%', transform: 'translateX(-50%)' }}>1km</span>
+          <span className="absolute left-0">100m</span>
+          <span className="absolute" style={{ left: '21%', transform: 'translateX(-50%)' }}>500m</span>
+          <span className="absolute" style={{ left: '47%', transform: 'translateX(-50%)' }}>1km</span>
           <span className="absolute right-0">2km</span>
         </div>
       </div>
