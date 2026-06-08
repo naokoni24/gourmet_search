@@ -11,10 +11,31 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [searchedParams, setSearchedParams] = useState<SearchParams | null>(null)
+
+  const getSearchConditionLabels = (params: SearchParams) => {
+    const labels: string[] = []
+    const keyword = params.keyword.trim()
+    const place = params.place.trim()
+
+    if (keyword) labels.push(`キーワード: ${keyword}`)
+    if (params.current_lat != null && params.current_lng != null) {
+      labels.push('場所: 現在地')
+    } else if (place) {
+      labels.push(`場所: ${place}`)
+    }
+    if (params.genre) labels.push(`ジャンル: ${params.genre}`)
+    labels.push(`距離: ${params.radius ?? 500}m以内`)
+    if (params.budget_max) labels.push(`予算: ${params.budget_max.toLocaleString()}円以内`)
+    if (params.rating_min) labels.push(`評価: ★${params.rating_min.toFixed(1)}以上`)
+
+    return labels.length ? labels : ['条件指定なし']
+  }
 
   const handleSearch = async (params: SearchParams) => {
     setLoading(true)
     setSearched(true)
+    setSearchedParams({ ...params })
     setError(null)
     try {
       const query = new URLSearchParams({
@@ -31,7 +52,7 @@ export default function Home() {
       if (!res.ok) throw new Error(`Server error: ${res.status}`)
       const data = await res.json()
       setRestaurants(data.restaurants ?? [])
-    } catch (e) {
+    } catch {
       setError('バックエンドに接続できませんでした。サーバーが起動しているか確認してください。')
       setRestaurants([])
     } finally {
@@ -59,6 +80,22 @@ export default function Home() {
               <div className="text-center py-24 text-gray-400">
                 <UtensilsCrossed size={48} className="mx-auto mb-4 opacity-30" />
                 <p className="text-lg">条件を入力して検索してください</p>
+              </div>
+            )}
+
+            {searched && searchedParams && (
+              <div className="mb-4 bg-white border border-gray-200 rounded-lg p-3">
+                <div className="text-xs font-semibold text-gray-500 mb-2">検索条件</div>
+                <div className="flex flex-wrap gap-2">
+                  {getSearchConditionLabels(searchedParams).map(label => (
+                    <span
+                      key={label}
+                      className="bg-orange-50 text-orange-700 border border-orange-100 rounded-full px-3 py-1 text-xs"
+                    >
+                      {label}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
 
