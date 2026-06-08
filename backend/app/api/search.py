@@ -62,12 +62,20 @@ async def search(
     results: list[Restaurant] = []
     if google_key:
         try:
-            query = f"{place} {genre} {keyword}".strip() or "飲食店"
-            results = await google_places.search_restaurants(
-                query, google_key, count=60,
-                location=location or "",
-                radius=effective_radius or 1500,
-            )
+            if (genre or keyword) or not location:
+                # キーワード/ジャンル指定あり、または位置情報なし → Text Search
+                query = f"{place} {genre} {keyword}".strip() or "飲食店"
+                results = await google_places.search_restaurants(
+                    query, google_key, count=60,
+                    location=location or "",
+                    radius=effective_radius or 1500,
+                )
+            else:
+                # 位置情報あり・ジャンル未指定 → Nearby Search（全飲食店を網羅）
+                results = await google_places.search_nearby(
+                    google_key, location,
+                    radius=effective_radius or 1500,
+                )
         except Exception:
             results = []
 

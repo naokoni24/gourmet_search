@@ -2,7 +2,18 @@ import asyncio
 import httpx
 from app.models.restaurant import Restaurant
 
-PLACES_V1 = "https://places.googleapis.com/v1/places:searchText"
+TEXT_SEARCH_URL = "https://places.googleapis.com/v1/places:searchText"
+NEARBY_SEARCH_URL = "https://places.googleapis.com/v1/places:searchNearby"
+
+# Nearby Search で対象にする飲食カテゴリ
+FOOD_TYPES = [
+    "restaurant", "cafe", "bar", "japanese_restaurant", "ramen_restaurant",
+    "sushi_restaurant", "chinese_restaurant", "korean_restaurant",
+    "italian_restaurant", "steak_house", "barbecue_restaurant",
+    "yakitori_restaurant", "japanese_izakaya_restaurant", "tonkatsu_restaurant",
+    "tempura_restaurant", "hamburger_restaurant", "pizza_restaurant",
+    "fast_food_restaurant", "meal_takeaway",
+]
 
 TYPE_MAP = {
     "restaurant": "レストラン", "japanese_restaurant": "和食",
@@ -14,17 +25,14 @@ TYPE_MAP = {
     "vietnamese_restaurant": "ベトナム料理", "mediterranean_restaurant": "地中海料理",
     "steak_house": "ステーキ", "hamburger_restaurant": "ハンバーガー",
     "pizza_restaurant": "ピザ", "seafood_restaurant": "海鮮",
-    "vegetarian_restaurant": "ベジタリアン", "vegan_restaurant": "ビーガン",
     "noodle_restaurant": "麺料理", "yakitori_restaurant": "焼き鳥",
     "shabu_shabu_restaurant": "しゃぶしゃぶ", "sukiyaki_restaurant": "すき焼き",
     "tonkatsu_restaurant": "とんかつ", "tempura_restaurant": "天ぷら",
     "izakaya": "居酒屋", "japanese_izakaya_restaurant": "居酒屋",
-    "bistro": "ビストロ", "diner": "ダイナー", "western_restaurant": "洋食",
-    "cafe": "カフェ", "coffee_shop": "カフェ",
-    "bar": "バー", "bakery": "ベーカリー", "dessert_shop": "デザート",
-    "ice_cream_shop": "アイスクリーム", "fast_food_restaurant": "ファストフード",
-    "food_court": "フードコート", "buffet_restaurant": "バイキング",
-    "brunch_restaurant": "ブランチ", "breakfast_restaurant": "朝食",
+    "bistro": "ビストロ", "western_restaurant": "洋食",
+    "cafe": "カフェ", "coffee_shop": "カフェ", "bar": "バー",
+    "fast_food_restaurant": "ファストフード", "meal_takeaway": "テイクアウト",
+    "bakery": "ベーカリー", "dessert_shop": "デザート",
 }
 
 FIELD_MASK = ",".join([
@@ -54,12 +62,7 @@ def _parse_places(data: dict, api_key: str) -> list[Restaurant]:
         loc = p.get("location", {})
         primary_type = p.get("primaryType", "")
         type_display = p.get("primaryTypeDisplayName", {}).get("text", "")
-        if primary_type in TYPE_MAP:
-            genre = [TYPE_MAP[primary_type]]
-        elif type_display:
-            genre = [type_display]
-        else:
-            genre = []
+        genre = [TYPE_MAP[primary_type]] if primary_type in TYPE_MAP else ([type_display] if type_display else [])
         results.append(Restaurant(
             id=f"google_{place_id}",
             name=p.get("displayName", {}).get("text", ""),
@@ -75,36 +78,59 @@ def _parse_places(data: dict, api_key: str) -> list[Restaurant]:
         ))
     return results
 
+async def search_nearby(api_key: str, location: str, radius: int) -> list[Restaurant]:
+    """ジャンル未指定時：Nearby Search で周辺の全飲食店を網羅取得"""
+    lat, lng = location.split(",")
+    headers = {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": api_key,
+        "X-Goog-FieldMask": FIELD_MASK.replace("nextPageToken,", "").replace(",nextPageToken", ""),
+        "Accept-Language": "ja",
+    }
+    body = {
+        "includedTypes": FOOD_TYPES,
+        "maxResultCount": 20,
+        "rankPreference": "POPULARITY",
+        "locationRestriction": {
+            "circle": {
+                "center": {"latitude": float(lat), "longitude": float(lng)},
+                "radius": float(radius),
+            }
+        },
+    }
+    results: list[Restaurant] = []
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        res = await client.post(NEARBY_SEARCH_URL, json=body, headers=headers)
+        data = res.json()
+        results.extend(_parse_places(data, api_key))
+    return results
+
 async def search_restaurants(
     query: str,
     api_key: str,
     location: str = "",
     radius: int = 1500,
     count: int = 60,
-    keyword: str = "",
-    genre: str = "",
 ) -> list[Restaurant]:
+    """キーワード・ジャンル指定時：Text Search"""
     headers = {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": api_key,
         "X-Goog-FieldMask": FIELD_MASK,
         "Accept-Language": "ja",
     }
-
-    food_words = ["グルメ", "飲食", "レストラン", "ラーメン", "寿司", "焼肉", "カフェ", "居酒屋",
-                  "restaurant", "ramen", "sushi", "cafe", "food", "lunch", "dinner"]
+    food_words = ["飲食", "レストラン", "ラーメン", "寿司", "焼肉", "カフェ", "居酒屋",
+                  "restaurant", "ramen", "sushi", "cafe", "food"]
     has_food_word = any(w in query.lower() for w in food_words)
-    effective_query = query if has_food_word else f"{query} グルメ"
+    effective_query = query if has_food_word else f"{query} 飲食店"
 
     base_body: dict = {
         "textQuery": effective_query,
         "languageCode": "ja",
         "maxResultCount": 20,
     }
-
     if location:
         lat, lng = location.split(",")
-        # locationBias より広めの円で候補を集め、Python側で距離フィルター
         api_radius = max(radius * 1.5, 2000)
         base_body["locationBias"] = {
             "circle": {
@@ -115,18 +141,16 @@ async def search_restaurants(
 
     results: list[Restaurant] = []
     page_token: str | None = None
-    max_pages = max(1, min((count + 19) // 20, 3))  # 最大3ページ（60件）
+    max_pages = max(1, min((count + 19) // 20, 3))
 
     async with httpx.AsyncClient(timeout=30.0) as client:
         for _ in range(max_pages):
             body = {**base_body}
             if page_token:
                 body["pageToken"] = page_token
-
-            res = await client.post(PLACES_V1, json=body, headers=headers)
+            res = await client.post(TEXT_SEARCH_URL, json=body, headers=headers)
             data = res.json()
             results.extend(_parse_places(data, api_key))
-
             page_token = data.get("nextPageToken")
             if not page_token:
                 break
