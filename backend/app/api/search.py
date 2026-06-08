@@ -94,7 +94,10 @@ async def search(
                     location=location or "",
                     radius=effective_radius or 1500,
                 )
-        except Exception:
+        except Exception as e:
+            import traceback
+            print(f"[search error] {e}")
+            traceback.print_exc()
             results = []
 
     def make_dist_fn(loc: str):
