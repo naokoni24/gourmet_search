@@ -126,24 +126,24 @@ async def search_restaurants(
     location: str = "",
     radius: int = 1500,
     count: int = 60,
+    included_type: str = "",
 ) -> list[Restaurant]:
-    """キーワード・ジャンル指定時：Text Search"""
+    """Text Search（全ケース共通）"""
     headers = {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": api_key,
         "X-Goog-FieldMask": FIELD_MASK,
         "Accept-Language": "ja",
     }
-    food_words = ["飲食", "レストラン", "ラーメン", "寿司", "焼肉", "カフェ", "居酒屋",
-                  "restaurant", "ramen", "sushi", "cafe", "food"]
-    has_food_word = any(w in query.lower() for w in food_words)
-    effective_query = query if has_food_word else f"{query} 飲食店"
 
     base_body: dict = {
-        "textQuery": effective_query,
+        "textQuery": query,
         "languageCode": "ja",
         "maxResultCount": 20,
     }
+    # ジャンル・キーワード未指定の場合は includedType で飲食店に絞る（クエリに"飲食店"を入れるより精度が高い）
+    if included_type:
+        base_body["includedType"] = included_type
     if location:
         lat, lng = location.split(",")
         api_radius = max(radius * 1.5, 2000)

@@ -59,7 +59,11 @@ async def search(
         effective_radius = 1500
 
     # クエリ構築：全ケースText Search
-    query = f"{place} {genre} {keyword}".strip() or "飲食店"
+    query = f"{place} {genre} {keyword}".strip() or place or "飲食店"
+
+    # ジャンル・キーワードなし = includedType:"restaurant" で全飲食店を対象にする
+    # （"飲食店"をクエリに入れるより精度が高く、高評価店が漏れにくい）
+    use_included_type = not genre and not keyword
 
     results: list[Restaurant] = []
     if google_key:
@@ -68,6 +72,7 @@ async def search(
                 query, google_key, count=60,
                 location=location or "",
                 radius=effective_radius or 1500,
+                included_type="restaurant" if use_included_type else "",
             )
         except Exception as e:
             import traceback
