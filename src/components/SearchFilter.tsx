@@ -39,9 +39,6 @@ export default function SearchFilter({ onSearch, loading }: Props) {
   const set = (key: keyof SearchParams, value: unknown) =>
     setParams(p => ({ ...p, [key]: value }))
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') onSearch(params)
-  }
 
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
@@ -93,7 +90,6 @@ export default function SearchFilter({ onSearch, loading }: Props) {
           placeholder="例：焼き鳥、デート"
           value={params.keyword}
           onChange={e => set('keyword', e.target.value)}
-          onKeyDown={handleKeyDown}
         />
       </div>
 
@@ -104,7 +100,6 @@ export default function SearchFilter({ onSearch, loading }: Props) {
           placeholder="例：渋谷、銀座"
           value={params.area}
           onChange={e => set('area', e.target.value)}
-          onKeyDown={handleKeyDown}
         />
       </div>
 
@@ -140,7 +135,6 @@ export default function SearchFilter({ onSearch, loading }: Props) {
             placeholder="例：新宿、渋谷"
             value={params.station}
             onChange={e => set('station', e.target.value)}
-            onKeyDown={handleKeyDown}
           />
         )}
         {locError && <p className="text-xs text-red-500 mt-1">{locError}</p>}
