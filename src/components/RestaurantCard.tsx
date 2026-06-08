@@ -1,6 +1,6 @@
 import { Restaurant } from '@/types/restaurant'
+import Image from 'next/image'
 import { MapPin, Star, ExternalLink } from 'lucide-react'
-
 
 const SOURCE_LABEL: Record<string, string> = {
   google: 'Google',
@@ -11,21 +11,22 @@ type Props = {
 }
 
 const GENRE_VISUALS = [
-  { keywords: ['焼肉', 'ステーキ', '韓国料理'], icon: '🥩', className: 'from-red-50 to-orange-100 text-red-500' },
-  { keywords: ['居酒屋', '焼き鳥', 'バー'], icon: '🍶', className: 'from-amber-50 to-orange-100 text-amber-600' },
-  { keywords: ['カフェ', 'デザート', 'ベーカリー'], icon: '☕', className: 'from-stone-50 to-amber-100 text-stone-600' },
-  { keywords: ['ラーメン', '麺料理'], icon: '🍜', className: 'from-yellow-50 to-orange-100 text-orange-500' },
-  { keywords: ['寿司', '海鮮'], icon: '🍣', className: 'from-sky-50 to-cyan-100 text-cyan-600' },
-  { keywords: ['イタリアン', 'ピザ'], icon: '🍕', className: 'from-green-50 to-red-100 text-red-500' },
-  { keywords: ['中華'], icon: '🥟', className: 'from-red-50 to-yellow-100 text-red-500' },
-  { keywords: ['和食', 'しゃぶしゃぶ', 'すき焼き', '天ぷら', 'とんかつ'], icon: '🍱', className: 'from-emerald-50 to-lime-100 text-emerald-600' },
+  { keywords: ['焼肉', 'ステーキ', '韓国料理'], label: '焼肉', src: '/genre-images/yakiniku.png' },
+  { keywords: ['居酒屋', '焼き鳥'], label: '居酒屋', src: '/genre-images/izakaya.png' },
+  { keywords: ['カフェ', 'デザート', 'ベーカリー'], label: 'カフェ', src: '/genre-images/cafe.png' },
+  { keywords: ['ラーメン', '麺料理'], label: 'ラーメン', src: '/genre-images/ramen.png' },
+  { keywords: ['寿司', '海鮮'], label: '寿司', src: '/genre-images/sushi.png' },
+  { keywords: ['イタリアン', 'ピザ'], label: 'イタリアン', src: '/genre-images/italian.png' },
+  { keywords: ['中華'], label: '中華', src: '/genre-images/chinese.png' },
+  { keywords: ['和食', 'しゃぶしゃぶ', 'すき焼き', '天ぷら', 'とんかつ'], label: '和食', src: '/genre-images/washoku.png' },
+  { keywords: ['バー'], label: 'バー', src: '/genre-images/bar.png' },
 ]
 
 const getGenreVisual = (genres: string[]) => {
   const joined = genres.join(' ')
   return GENRE_VISUALS.find(v =>
     v.keywords.some(keyword => joined.includes(keyword))
-  ) ?? { icon: '🍽', className: 'from-gray-50 to-orange-50 text-orange-500' }
+  ) ?? { label: 'レストラン', src: '/genre-images/restaurant.png' }
 }
 
 export default function RestaurantCard({ restaurant: r }: Props) {
@@ -33,9 +34,21 @@ export default function RestaurantCard({ restaurant: r }: Props) {
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-      <div className={`w-full h-36 bg-gradient-to-br ${visual.className} flex items-center justify-center`}>
-        <div className="w-20 h-20 rounded-full bg-white/70 border border-white/80 shadow-sm flex items-center justify-center text-4xl">
-          {visual.icon}
+      <div className="relative w-full h-36 bg-orange-50">
+        <Image
+          src={visual.src}
+          alt=""
+          fill
+          sizes="(max-width: 768px) 100vw, 50vw"
+          loading="lazy"
+          decoding="async"
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/10 to-transparent" />
+        <div className="absolute left-3 bottom-3">
+          <span className="inline-flex items-center rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-gray-700 shadow-sm">
+            {visual.label}
+          </span>
         </div>
       </div>
       <div className="p-3">

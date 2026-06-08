@@ -8,9 +8,9 @@ from app.crawlers import google_places
 
 router = APIRouter()
 
-AREA_PRIMARY_COUNT = 40
+AREA_PRIMARY_COUNT = 60
 AREA_SUPPLEMENT_COUNT = 20
-SEARCH_RESULT_LIMIT = 40
+SEARCH_RESULT_LIMIT = 60
 
 def _merge_unique(*groups: list[Restaurant]) -> list[Restaurant]:
     seen: set[str] = set()
