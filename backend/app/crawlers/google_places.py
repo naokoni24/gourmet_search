@@ -101,7 +101,13 @@ async def _nearby_one_group(
         if page_token:
             body["pageToken"] = page_token
         res = await client.post(NEARBY_SEARCH_URL, json=body, headers=headers)
+        if res.status_code != 200:
+            print(f"[nearby_search] HTTP {res.status_code}: {res.text[:500]}")
+            break
         data = res.json()
+        if "error" in data:
+            print(f"[nearby_search] API error: {data['error']}")
+            break
         results.extend(_parse_places(data, api_key))
         page_token = data.get("nextPageToken")
         if not page_token:
@@ -160,7 +166,13 @@ async def search_restaurants(
             if page_token:
                 body["pageToken"] = page_token
             res = await client.post(TEXT_SEARCH_URL, json=body, headers=headers)
+            if res.status_code != 200:
+                print(f"[text_search] HTTP {res.status_code}: {res.text[:500]}")
+                break
             data = res.json()
+            if "error" in data:
+                print(f"[text_search] API error: {data['error']}")
+                break
             results.extend(_parse_places(data, api_key))
             page_token = data.get("nextPageToken")
             if not page_token:

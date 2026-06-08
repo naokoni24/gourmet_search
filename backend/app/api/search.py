@@ -2,7 +2,6 @@ from fastapi import APIRouter, Query
 from typing import Optional
 import os
 import math
-import asyncio
 
 from app.models.restaurant import Restaurant
 from app.crawlers import google_places
@@ -32,9 +31,6 @@ async def _geocode_station(station: str, api_key: str) -> Optional[str]:
         pass
     return None
 
-# ジャンル未指定の場合に並列検索するクエリ群（代表的な食事カテゴリを網羅）
-BROAD_FOOD_QUERIES = ["グルメ", "ランチ", "居酒屋 焼肉 ラーメン"]
-
 @router.get("/search")
 async def search(
     keyword: str = Query("", description="キーワード"),
@@ -54,41 +50,35 @@ async def search(
     elif place and google_key:
         location = await _geocode_station(place, google_key)
 
-    effective_radius = radius
-    if current_lat is not None and effective_radius is None:
+    effective_radius = radius or 300
+    if current_lat is not None and radius is None:
         effective_radius = 1000
-    elif place and location and effective_radius is None:
-        effective_radius = 1500
 
     results: list[Restaurant] = []
     if google_key:
         try:
-            if place and not genre and not keyword:
-                # ジャンル未指定：複数クエリを並列実行してマージ（漏れを防ぐ）
-                tasks = [
-                    google_places.search_restaurants(
-                        f"{place} {food_q}", google_key, count=20,
-                        location=location or "",
-                        radius=effective_radius or 1500,
+            if location and not genre and not keyword:
+                # ジャンル・キーワードなし → Nearby Search（1回で網羅、コスト最小）
+                results = await google_places.search_nearby(
+                    google_key, location, radius=effective_radius,
+                )
+                print(f"[nearby] {len(results)} results for {place or 'current_loc'} r={effective_radius}")
+                # Nearby Searchが0件の場合はText Searchにフォールバック
+                if not results:
+                    print("[nearby] 0 results, falling back to text search")
+                    results = await google_places.search_restaurants(
+                        f"{place} グルメ" if place else "飲食店",
+                        google_key, count=60,
+                        location=location,
+                        radius=effective_radius,
                     )
-                    for food_q in BROAD_FOOD_QUERIES
-                ]
-                all_results = await asyncio.gather(*tasks, return_exceptions=True)
-                seen_ids: set[str] = set()
-                for r_list in all_results:
-                    if isinstance(r_list, Exception):
-                        continue
-                    for r in r_list:
-                        if r.id not in seen_ids:
-                            seen_ids.add(r.id)
-                            results.append(r)
             else:
-                # ジャンル・キーワードあり：1クエリで十分
+                # ジャンル・キーワードあり → Text Search
                 query = f"{place} {genre} {keyword}".strip() or "飲食店"
                 results = await google_places.search_restaurants(
                     query, google_key, count=60,
                     location=location or "",
-                    radius=effective_radius or 1500,
+                    radius=effective_radius,
                 )
         except Exception as e:
             import traceback
