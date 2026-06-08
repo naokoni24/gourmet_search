@@ -8,6 +8,17 @@ from app.crawlers import google_places
 
 router = APIRouter()
 
+def _merge_unique(*groups: list[Restaurant]) -> list[Restaurant]:
+    seen: set[str] = set()
+    merged: list[Restaurant] = []
+    for group in groups:
+        for restaurant in group:
+            if restaurant.id in seen:
+                continue
+            seen.add(restaurant.id)
+            merged.append(restaurant)
+    return merged
+
 async def _geocode_station(station: str, api_key: str) -> Optional[str]:
     import httpx
     try:
@@ -50,7 +61,7 @@ async def search(
     elif place and google_key:
         location = await _geocode_station(place, google_key)
 
-    effective_radius = radius or 300
+    effective_radius = radius or 500
     if current_lat is not None and radius is None:
         effective_radius = 1000
 
@@ -58,20 +69,41 @@ async def search(
     if google_key:
         try:
             if location and not genre and not keyword:
-                # ジャンル・キーワードなし → Nearby Search（1回で網羅、コスト最小）
-                results = await google_places.search_nearby(
+                # ジャンル・キーワードなし → Nearby Searchを主軸にしつつ、
+                # 人気順Nearbyから漏れる高評価店をText Searchで補完する。
+                nearby_results = await google_places.search_nearby(
                     google_key, location, radius=effective_radius,
                 )
-                print(f"[nearby] {len(results)} results for {place or 'current_loc'} r={effective_radius}")
-                # Nearby Searchが0件の場合はText Searchにフォールバック
-                if not results:
-                    print("[nearby] 0 results, falling back to text search")
-                    results = await google_places.search_restaurants(
-                        f"{place} グルメ" if place else "飲食店",
+                print(f"[nearby] {len(nearby_results)} results for {place or 'current_loc'} r={effective_radius}")
+
+                text_results: list[Restaurant] = []
+                if place:
+                    text_results = await google_places.search_restaurants(
+                        f"{place} グルメ",
                         google_key, count=60,
                         location=location,
                         radius=effective_radius,
                     )
+                    print(f"[text supplement] {len(text_results)} results for {place} r={effective_radius}")
+                    high_rating_results = await google_places.search_restaurants(
+                        f"{place} 高評価 グルメ",
+                        google_key, count=20,
+                        location=location,
+                        radius=effective_radius,
+                    )
+                    print(f"[high rating supplement] {len(high_rating_results)} results for {place} r={effective_radius}")
+                elif not nearby_results:
+                    print("[nearby] 0 results, falling back to text search")
+                    text_results = await google_places.search_restaurants(
+                        "飲食店", google_key, count=60,
+                        location=location,
+                        radius=effective_radius,
+                    )
+                    high_rating_results = []
+                else:
+                    high_rating_results = []
+
+                results = _merge_unique(nearby_results, text_results, high_rating_results)
             else:
                 # ジャンル・キーワードあり → Text Search
                 query = f"{place} {genre} {keyword}".strip() or "飲食店"

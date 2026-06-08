@@ -28,7 +28,7 @@ TYPE_MAP = {
     "bakery": "ベーカリー", "dessert_shop": "デザート",
 }
 
-FIELD_MASK = ",".join([
+PLACE_FIELD_MASK = ",".join([
     "places.id",
     "places.displayName",
     "places.formattedAddress",
@@ -39,6 +39,10 @@ FIELD_MASK = ",".join([
     "places.primaryType",
     "places.primaryTypeDisplayName",
     "places.googleMapsUri",
+])
+
+TEXT_FIELD_MASK = ",".join([
+    PLACE_FIELD_MASK,
     "nextPageToken",
 ])
 
@@ -80,7 +84,7 @@ async def _nearby_one_group(
     headers = {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": api_key,
-        "X-Goog-FieldMask": FIELD_MASK,
+        "X-Goog-FieldMask": PLACE_FIELD_MASK,
         "Accept-Language": "ja",
     }
     base_body: dict = {
@@ -137,7 +141,7 @@ async def search_restaurants(
     headers = {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": api_key,
-        "X-Goog-FieldMask": FIELD_MASK,
+        "X-Goog-FieldMask": TEXT_FIELD_MASK,
         "Accept-Language": "ja",
     }
 

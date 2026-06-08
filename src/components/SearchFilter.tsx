@@ -28,7 +28,7 @@ export default function SearchFilter({ onSearch, loading }: Props) {
     keyword: '',
     place: '',
     genre: '',
-    radius: 300,
+    radius: 500,
   })
 
   const [locating, setLocating] = useState(false)
@@ -141,14 +141,14 @@ export default function SearchFilter({ onSearch, loading }: Props) {
       <div>
         <label className="text-xs text-gray-500 mb-1 flex justify-between">
           <span>{params.current_lat ? '現在地からの距離' : '駅・エリアからの距離'}</span>
-          <span className="font-medium text-orange-500">{params.radius ? `${params.radius}m以内` : '300m以内'}</span>
+          <span className="font-medium text-orange-500">{params.radius ? `${params.radius}m以内` : '500m以内'}</span>
         </label>
         <input
           type="range"
           min={100}
           max={2000}
           step={100}
-          value={params.radius ?? 300}
+          value={params.radius ?? 500}
           onChange={e => set('radius', Number(e.target.value))}
           className="w-full accent-orange-500"
         />
