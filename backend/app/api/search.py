@@ -150,6 +150,10 @@ async def search(
             items = [r for r in items if dist_fn(r) <= effective_radius]
         if rating_min is not None:
             items = [r for r in items if r.rating and r.rating >= rating_min]
+        if genre:
+            # ジャンルはテキスト検索のクエリにも使うが、Googleの分類上ジャンル名と
+            # 完全一致しない店舗が混ざるため、実際のgenreフィールドでも絞り込む
+            items = [r for r in items if any(genre in g for g in r.genre)]
         if dist_fn:
             for r in items:
                 r.distance_m = round(dist_fn(r))
