@@ -12,6 +12,11 @@ AREA_PRIMARY_COUNT = 60
 AREA_SUPPLEMENT_COUNT = 20
 SEARCH_RESULT_LIMIT = 60
 
+# フロントの絞り込みモーダル（GENRES）と同じジャンル名一覧。
+# キーワード欄にこれらとまったく同じ文字列が入力された場合も、
+# ジャンル選択時と同様に厳密フィルタの対象にする。
+GENRE_LABELS = {"和食", "洋食", "イタリアン", "中華", "ラーメン", "居酒屋", "焼肉", "カフェ", "バー", "韓国料理"}
+
 def _merge_unique(*groups: list[Restaurant]) -> list[Restaurant]:
     seen: set[str] = set()
     merged: list[Restaurant] = []
@@ -150,10 +155,12 @@ async def search(
             items = [r for r in items if dist_fn(r) <= effective_radius]
         if rating_min is not None:
             items = [r for r in items if r.rating and r.rating >= rating_min]
-        if genre:
-            # ジャンルはテキスト検索のクエリにも使うが、Googleの分類上ジャンル名と
-            # 完全一致しない店舗が混ざるため、実際のgenreフィールドでも絞り込む
-            items = [r for r in items if any(genre in g for g in r.genre)]
+        # ジャンルはテキスト検索のクエリにも使うが、Googleの分類上ジャンル名と
+        # 完全一致しない店舗が混ざるため、実際のgenreフィールドでも絞り込む。
+        # キーワード欄にジャンル名そのものが入力された場合も同様に扱う。
+        genre_filters = {g for g in (genre.strip(), keyword.strip()) if g in GENRE_LABELS}
+        for genre_filter in genre_filters:
+            items = [r for r in items if any(genre_filter in g for g in r.genre)]
         if dist_fn:
             for r in items:
                 r.distance_m = round(dist_fn(r))
