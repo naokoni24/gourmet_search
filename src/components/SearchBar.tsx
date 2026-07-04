@@ -72,7 +72,7 @@ export default function SearchBar({ params, onChange, onSearch, onOpenFilters, a
           <div className="flex-1 flex items-center gap-2">
             <input
               className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2.5 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 text-[16px]"
-              placeholder="例：阿佐ヶ谷、渋谷、新宿"
+              placeholder="例：渋谷、新宿、銀座"
               value={params.place}
               onChange={e => set('place', e.target.value)}
             />
