@@ -2,37 +2,54 @@
 
 import { useState } from 'react'
 import { SearchParams, Restaurant } from '@/types/restaurant'
-import SearchFilter from '@/components/SearchFilter'
+import SearchBar from '@/components/SearchBar'
+import FilterModal from '@/components/FilterModal'
 import RestaurantCard from '@/components/RestaurantCard'
 import { UtensilsCrossed } from 'lucide-react'
 
+const DEFAULT_PARAMS: SearchParams = {
+  keyword: '',
+  place: '',
+  genre: '',
+  radius: 500,
+}
+
 export default function Home() {
+  const [params, setParams] = useState<SearchParams>(DEFAULT_PARAMS)
+  const [filterOpen, setFilterOpen] = useState(false)
   const [restaurants, setRestaurants] = useState<Restaurant[]>([])
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searchedParams, setSearchedParams] = useState<SearchParams | null>(null)
 
-  const getSearchConditionLabels = (params: SearchParams) => {
+  const activeFilterCount = [
+    params.genre,
+    params.budget_max,
+    params.rating_min,
+    params.radius && params.radius !== 500 ? params.radius : undefined,
+  ].filter(v => v !== undefined && v !== '').length
+
+  const getSearchConditionLabels = (p: SearchParams) => {
     const labels: string[] = []
-    const keyword = params.keyword.trim()
-    const place = params.place.trim()
+    const keyword = p.keyword.trim()
+    const place = p.place.trim()
 
     if (keyword) labels.push(`キーワード: ${keyword}`)
-    if (params.current_lat != null && params.current_lng != null) {
+    if (p.current_lat != null && p.current_lng != null) {
       labels.push('場所: 現在地')
     } else if (place) {
       labels.push(`場所: ${place}`)
     }
-    if (params.genre) labels.push(`ジャンル: ${params.genre}`)
-    labels.push(`距離: ${params.radius ?? 500}m以内`)
-    if (params.budget_max) labels.push(`予算: ${params.budget_max.toLocaleString()}円以内`)
-    if (params.rating_min) labels.push(`評価: ★${params.rating_min.toFixed(1)}以上`)
+    if (p.genre) labels.push(`ジャンル: ${p.genre}`)
+    labels.push(`距離: ${p.radius ?? 500}m以内`)
+    if (p.budget_max) labels.push(`予算: ${p.budget_max.toLocaleString()}円以内`)
+    if (p.rating_min) labels.push(`評価: ★${p.rating_min.toFixed(1)}以上`)
 
     return labels.length ? labels : ['条件指定なし']
   }
 
-  const handleSearch = async (params: SearchParams) => {
+  const handleSearch = async () => {
     setLoading(true)
     setSearched(true)
     setSearchedParams({ ...params })
@@ -42,7 +59,7 @@ export default function Home() {
         keyword: params.keyword,
         place: params.place,
         genre: params.genre,
-...(params.budget_max ? { budget_max: String(params.budget_max) } : {}),
+        ...(params.budget_max ? { budget_max: String(params.budget_max) } : {}),
         ...(params.rating_min ? { rating_min: String(params.rating_min) } : {}),
         ...(params.radius ? { radius: String(params.radius) } : {}),
         ...(params.current_lat != null ? { current_lat: String(params.current_lat) } : {}),
@@ -63,74 +80,88 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-2">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
           <UtensilsCrossed className="text-orange-500" size={24} />
           <h1 className="text-xl font-bold text-gray-800">Googleグルメサーチ</h1>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-4 py-6">
-        <div className="flex flex-col md:flex-row gap-6">
-          <aside className="w-full md:w-64 md:shrink-0">
-            <SearchFilter onSearch={handleSearch} loading={loading} />
-          </aside>
+      <div className="max-w-4xl mx-auto px-4 py-6 flex flex-col gap-6">
+        <SearchBar
+          params={params}
+          onChange={setParams}
+          onSearch={handleSearch}
+          onOpenFilters={() => setFilterOpen(true)}
+          activeFilterCount={activeFilterCount}
+          loading={loading}
+        />
 
-          <main className="flex-1">
-            {!searched && (
-              <div className="text-center py-24 text-gray-400">
-                <UtensilsCrossed size={48} className="mx-auto mb-4 opacity-30" />
-                <p className="text-lg">条件を入力して検索してください</p>
+        <main>
+          {!searched && (
+            <div className="text-center py-24 text-gray-400">
+              <UtensilsCrossed size={48} className="mx-auto mb-4 opacity-30" />
+              <p className="text-lg">条件を入力して検索してください</p>
+            </div>
+          )}
+
+          {searched && searchedParams && (
+            <div className="mb-4 bg-white border border-gray-200 rounded-lg p-3">
+              <div className="text-xs font-semibold text-gray-500 mb-2">検索条件</div>
+              <div className="flex flex-wrap gap-2">
+                {getSearchConditionLabels(searchedParams).map(label => (
+                  <span
+                    key={label}
+                    className="bg-orange-50 text-orange-700 border border-orange-100 rounded-full px-3 py-1 text-xs"
+                  >
+                    {label}
+                  </span>
+                ))}
               </div>
-            )}
+            </div>
+          )}
 
-            {searched && searchedParams && (
-              <div className="mb-4 bg-white border border-gray-200 rounded-lg p-3">
-                <div className="text-xs font-semibold text-gray-500 mb-2">検索条件</div>
-                <div className="flex flex-wrap gap-2">
-                  {getSearchConditionLabels(searchedParams).map(label => (
-                    <span
-                      key={label}
-                      className="bg-orange-50 text-orange-700 border border-orange-100 rounded-full px-3 py-1 text-xs"
-                    >
-                      {label}
-                    </span>
+          {loading && (
+            <div className="text-center py-24 text-gray-400">
+              <div className="inline-block w-8 h-8 border-4 border-orange-400 border-t-transparent rounded-full animate-spin mb-4" />
+              <p>検索中...</p>
+            </div>
+          )}
+
+          {!loading && error && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-600 text-sm">
+              ⚠️ {error}
+            </div>
+          )}
+
+          {!loading && searched && !error && (
+            restaurants.length === 0 ? (
+              <p className="text-center py-16 text-gray-400">見つかりませんでした</p>
+            ) : (
+              <section>
+                <h2 className="text-sm font-semibold text-gray-500 mb-3">
+                  店舗 {restaurants.length}件
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {restaurants.map(r => (
+                    <RestaurantCard key={r.id} restaurant={r} />
                   ))}
                 </div>
-              </div>
-            )}
-
-            {loading && (
-              <div className="text-center py-24 text-gray-400">
-                <div className="inline-block w-8 h-8 border-4 border-orange-400 border-t-transparent rounded-full animate-spin mb-4" />
-                <p>検索中...</p>
-              </div>
-            )}
-
-            {!loading && error && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-600 text-sm">
-                ⚠️ {error}
-              </div>
-            )}
-
-            {!loading && searched && !error && (
-              restaurants.length === 0 ? (
-                <p className="text-center py-16 text-gray-400">見つかりませんでした</p>
-              ) : (
-                <section>
-                  <h2 className="text-sm font-semibold text-gray-500 mb-3">
-                    店舗 {restaurants.length}件
-                  </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {restaurants.map(r => (
-                      <RestaurantCard key={r.id} restaurant={r} />
-                    ))}
-                  </div>
-                </section>
-              )
-            )}
-          </main>
-        </div>
+              </section>
+            )
+          )}
+        </main>
       </div>
+
+      <FilterModal
+        open={filterOpen}
+        params={params}
+        onChange={setParams}
+        onClose={() => setFilterOpen(false)}
+        onApply={() => {
+          setFilterOpen(false)
+          handleSearch()
+        }}
+      />
     </div>
   )
 }
