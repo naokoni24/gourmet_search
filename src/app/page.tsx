@@ -5,7 +5,7 @@ import { SearchParams, Restaurant } from '@/types/restaurant'
 import SearchBar from '@/components/SearchBar'
 import FilterModal from '@/components/FilterModal'
 import RestaurantCard from '@/components/RestaurantCard'
-import { UtensilsCrossed, MapPin } from 'lucide-react'
+import { UtensilsCrossed } from 'lucide-react'
 
 const DEFAULT_PARAMS: SearchParams = {
   keyword: '',
@@ -30,25 +30,23 @@ export default function Home() {
     params.radius && params.radius !== 500 ? params.radius : undefined,
   ].filter(v => v !== undefined && v !== '').length
 
-  type ConditionTag = { text: string; isLocation?: boolean }
-
-  const getSearchConditionTags = (p: SearchParams): ConditionTag[] => {
-    const tags: ConditionTag[] = []
+  const getSearchConditionLabels = (p: SearchParams) => {
+    const labels: string[] = []
     const keyword = p.keyword.trim()
     const place = p.place.trim()
 
-    if (keyword) tags.push({ text: `キーワード: ${keyword}` })
+    if (keyword) labels.push(`キーワード: ${keyword}`)
     if (p.current_lat != null && p.current_lng != null) {
-      tags.push({ text: '現在地', isLocation: true })
+      labels.push('場所: 現在地')
     } else if (place) {
-      tags.push({ text: `場所: ${place}` })
+      labels.push(`場所: ${place}`)
     }
-    if (p.genre) tags.push({ text: `ジャンル: ${p.genre}` })
-    tags.push({ text: `距離: ${p.radius ?? 500}m以内` })
-    if (p.budget_max) tags.push({ text: `予算: ${p.budget_max.toLocaleString()}円以内` })
-    if (p.rating_min) tags.push({ text: `評価: ★${p.rating_min.toFixed(1)}以上` })
+    if (p.genre) labels.push(`ジャンル: ${p.genre}`)
+    labels.push(`距離: ${p.radius ?? 500}m以内`)
+    if (p.budget_max) labels.push(`予算: ${p.budget_max.toLocaleString()}円以内`)
+    if (p.rating_min) labels.push(`評価: ★${p.rating_min.toFixed(1)}以上`)
 
-    return tags.length ? tags : [{ text: '条件指定なし' }]
+    return labels.length ? labels : ['条件指定なし']
   }
 
   const handleSearch = async () => {
@@ -110,17 +108,12 @@ export default function Home() {
             <div className="mb-4 bg-white border border-gray-200 rounded-lg p-3">
               <div className="text-xs font-semibold text-gray-500 mb-2">検索条件</div>
               <div className="flex flex-wrap gap-2">
-                {getSearchConditionTags(searchedParams).map(tag => (
+                {getSearchConditionLabels(searchedParams).map(label => (
                   <span
-                    key={tag.text}
-                    className={
-                      tag.isLocation
-                        ? 'flex items-center gap-1 bg-green-600 text-white border border-green-600 rounded-full px-3 py-1 text-xs font-semibold shadow-sm'
-                        : 'bg-orange-50 text-orange-700 border border-orange-100 rounded-full px-3 py-1 text-xs'
-                    }
+                    key={label}
+                    className="bg-orange-50 text-orange-700 border border-orange-100 rounded-full px-3 py-1 text-xs"
                   >
-                    {tag.isLocation && <MapPin size={12} />}
-                    {tag.text}
+                    {label}
                   </span>
                 ))}
               </div>

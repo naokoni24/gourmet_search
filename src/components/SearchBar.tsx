@@ -79,9 +79,9 @@ export default function SearchBar({ params, onChange, onSearch, onOpenFilters, a
             <button
               onClick={getCurrentLocation}
               disabled={locating}
-              className="flex items-center gap-1 text-xs text-orange-500 hover:text-orange-600 disabled:opacity-50 transition-colors whitespace-nowrap shrink-0"
+              className="flex items-center gap-1.5 text-sm font-semibold text-white bg-orange-500 hover:bg-orange-600 disabled:opacity-50 transition-colors whitespace-nowrap shrink-0 rounded-lg px-3 py-2.5"
             >
-              <LocateFixed size={14} className={locating ? 'animate-spin' : ''} />
+              <LocateFixed size={16} className={locating ? 'animate-spin' : ''} />
               {locating ? '取得中' : '現在地'}
             </button>
           </div>
