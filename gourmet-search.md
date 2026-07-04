@@ -27,7 +27,7 @@ Google Places API (New) を使い、駅名・エリア名 または 現在地の
 | アプリ名 | Googleグルメサーチ |
 | GitHub | https://github.com/naokoni24/gourmet_search |
 | フロントエンド ローカル起動 | `npm run dev`（`http://localhost:3000`、デフォルトで `http://localhost:8000` のバックエンドを呼ぶ） |
-| バックエンド ローカル起動 | `cd backend && uvicorn app.main:app --reload`（`http://localhost:8000`） |
+| バックエンド ローカル起動 | `cd backend && uvicorn app.main:app --reload`（`http://localhost:8000`）。※`backend/venv`はプロジェクトが旧パス（`/Users/nao/Desktop/gourmet-search`）にあった頃に作られたため、`venv/bin/uvicorn`等のshebangが壊れている。ローカルでは `cd backend && venv/bin/python -m uvicorn app.main:app --reload --port 8000` のように`venv/bin/python -m uvicorn`経由で起動する（`.claude/launch.json`にこの構成で`gourmet-search-backend`という設定済みプレビュー起動コマンドを追加済み、`cwd`をbackendに設定しないと`load_dotenv()`が`backend/.env`を見つけられずAPIキー未設定のまま無言で空結果を返す点に注意）。 |
 | フロントエンド デプロイ | Vercel（想定） |
 | バックエンド デプロイ | Render（`backend/Procfile` で `uvicorn app.main:app --host 0.0.0.0 --port $PORT` を起動、`runtime.txt` は `python-3.12`） |
 
@@ -169,3 +169,5 @@ class Restaurant(BaseModel):
 - **`station` / `photo_url` は常にnull**: カード表示は `station ?? address` でaddressにフォールバックしている。
 - **`HOTPEPPER_API_KEY`** は `.env.example` に残るが未使用（Google Places単独運用）。
 - **認証は単一共有パスワード方式**: ユーザー個別のアカウント管理は無い。
+- **ジャンルは絞り込みモーダルで選択してもGoogle検索クエリの一部として使われるだけで、結果を厳密にそのジャンルへ絞り込むわけではない**（例：ジャンル「ラーメン」＋評価4.0以上で検索すると、`primaryType`がラーメン以外の「ハラル料理店」「麺類専門店」等の店舗も類義語ヒットとして混ざることがある）。距離・評価（`rating_min`）フィルタは`search.py`側で厳密に効いている。2026-07-05にローカルで渋谷エリア・現在地モックの両方で動作確認済み（距離・評価・ソート順は常に条件通り、ジャンルのみ上記の緩さがある）。
+- **【ローカル動作確認でのみ発生】ジャンル画像（`public/genre-images/*.png`）が検索結果カードで読み込めない**: `next/image`経由のリクエスト（`/_next/image?url=...`）が`400 Bad Request`（`The requested resource isn't a valid image.`）を返す。原因はNext.js 16の破壊的変更「Local IP Restriction」（`node_modules/next/dist/docs/01-app/02-guides/upgrading/version-16.md`）で、画像最適化時の内部フェッチ先IPがローカル（`localhost`等）だとデフォルトでブロックされるようになったため。`next.config.ts`で`images.dangerouslyAllowLocalIP: true`にすれば回避できるが、本番（Vercel等の公開ドメイン）ではIPがローカル判定されず発生しない可能性が高いため未対応。ローカルで画像込みの見た目を確認したい場合はこの設定追加を検討。
