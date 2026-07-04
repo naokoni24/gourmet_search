@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { SearchParams, Restaurant } from '@/types/restaurant'
 import SearchBar from '@/components/SearchBar'
 import FilterModal from '@/components/FilterModal'
@@ -15,6 +15,16 @@ const DEFAULT_PARAMS: SearchParams = {
   radius: 500,
 }
 
+// 店舗詳細・口コミは外部サイトへ新規タブで遷移するため、元のタブに戻った時に
+// 検索結果が消えていないよう、直近の検索結果をタブ内に保存しておく
+const LAST_SEARCH_KEY = 'gourmet-search:last-search'
+
+type SavedSearch = {
+  params: SearchParams
+  searchedParams: SearchParams
+  restaurants: Restaurant[]
+}
+
 export default function Home() {
   const [params, setParams] = useState<SearchParams>(DEFAULT_PARAMS)
   const [filterOpen, setFilterOpen] = useState(false)
@@ -23,6 +33,20 @@ export default function Home() {
   const [searched, setSearched] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searchedParams, setSearchedParams] = useState<SearchParams | null>(null)
+
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(LAST_SEARCH_KEY)
+      if (!saved) return
+      const data: SavedSearch = JSON.parse(saved)
+      setParams(data.params)
+      setSearchedParams(data.searchedParams)
+      setRestaurants(data.restaurants)
+      setSearched(true)
+    } catch {
+      // 壊れた保存データは無視して通常通り初期表示にする
+    }
+  }, [])
 
   const activeFilterCount = [
     params.genre,
@@ -69,7 +93,14 @@ export default function Home() {
       const res = await fetch(`/api/search?${query}`)
       if (!res.ok) throw new Error(`Server error: ${res.status}`)
       const data = await res.json()
-      setRestaurants(data.restaurants ?? [])
+      const results: Restaurant[] = data.restaurants ?? []
+      setRestaurants(results)
+      try {
+        const saved: SavedSearch = { params, searchedParams: { ...params }, restaurants: results }
+        sessionStorage.setItem(LAST_SEARCH_KEY, JSON.stringify(saved))
+      } catch {
+        // sessionStorageが使えない環境では保存をスキップ
+      }
     } catch {
       setError('バックエンドに接続できませんでした。サーバーが起動しているか確認してください。')
       setRestaurants([])
