@@ -93,7 +93,7 @@ export default function SearchBar({ params, onChange, onSearch, onOpenFilters, a
           title="絞り込み"
         >
           <SlidersHorizontal size={16} />
-          <span className="hidden sm:inline text-sm">絞り込み</span>
+          <span className="text-sm">絞り込み</span>
           {activeFilterCount > 0 && (
             <span className="absolute -top-1.5 -right-1.5 bg-orange-500 text-white text-[10px] leading-none rounded-full w-4 h-4 flex items-center justify-center">
               {activeFilterCount}
