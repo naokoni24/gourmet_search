@@ -147,6 +147,7 @@ Google Places API呼び出し（`backend/app/crawlers/google_places.py`）:
 
 - 店舗写真は取得していないため、ジャンルにマッチする9パターンの生成画像（`public/genre-images/*.png`: 焼肉・居酒屋・カフェ・ラーメン・寿司・イタリアン・中華・和食・バー、マッチしなければ `restaurant.png`）を表示。
 - 評価バッジをクリックすると、`place_id` から組み立てたGoogle検索の口コミページ（`https://search.google.com/local/reviews?placeid=...`）を新規タブで開く。
+- 【2026-07-05 削除】店名の右に表示していた`source`（常に`"google"`）由来の「Google」バッジ（`SOURCE_LABEL`）は、ユーザーの依頼で削除した。共通ヘッダーに`GoogleIcon`（Sign in with Google用の丸いGアイコン）を追加済みのため、カード単位でのGoogle表示は不要と判断。
 - 「店舗詳細を見る」リンクは `googleMapsUri`（Google Maps）へ。
 - 距離は1km未満は `m`、以上は小数1桁の `km` で表示。
 

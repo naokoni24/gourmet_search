@@ -2,10 +2,6 @@ import { Restaurant } from '@/types/restaurant'
 import Image from 'next/image'
 import { MapPin, Star, ExternalLink } from 'lucide-react'
 
-const SOURCE_LABEL: Record<string, string> = {
-  google: 'Google',
-}
-
 type Props = {
   restaurant: Restaurant
 }
@@ -52,11 +48,8 @@ export default function RestaurantCard({ restaurant: r }: Props) {
         </div>
       </div>
       <div className="p-3">
-        <div className="flex items-start justify-between gap-2 mb-1">
+        <div className="mb-1">
           <h3 className="font-semibold text-gray-800 text-sm leading-snug">{r.name}</h3>
-          <span className="text-xs bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full shrink-0">
-            {SOURCE_LABEL[r.source] ?? r.source}
-          </span>
         </div>
 
         {r.rating && (() => {
