@@ -3,8 +3,12 @@ import { NextRequest, NextResponse } from 'next/server'
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  // 認証不要なパス
-  if (pathname.startsWith('/login') || pathname.startsWith('/api/auth')) {
+  // 認証不要なパス（apple-icon等はOSが未ログイン状態で取得するため公開する）
+  if (
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/api/auth') ||
+    pathname === '/apple-icon.png'
+  ) {
     return NextResponse.next()
   }
 
