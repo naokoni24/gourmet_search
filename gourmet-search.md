@@ -99,6 +99,13 @@ Google Places API (New) を使い、駅名・エリア名 または 現在地の
   - 修正: クロップではなく「行単位の黒つぶし」に変更。各行を左右から走査し、黒（RGB各値が閾値25以下）が続く区間だけをその内側の色で塗り替える方式にした。角の黒い部分だけを周囲の色で置き換え、黒くない中央部分は一切削らないため、ズームやトリミングなしで元の構図をそのまま180x180に縮小できる。
   - この処理はこのアイコン特有の「四隅だけが黒い正方形画像」という前提に依存するため、汎用スクリプト化はせず都度Pythonワンライナーで実行している。
 
+## Googleロゴ表示（`src/components/GoogleIcon.tsx`）
+
+- 【2026-07-05 追加】ユーザーからログイン画面・検索画面・検索後画面にGoogleのロゴ画像を表示したい旨の依頼。Googleのブランドガイドライン上、第三者が使える形が決まっているため、AskUserQuestionで「どのロゴ（Powered by Google表示／カラーの丸いGアイコン／Googleワードマーク全体）」「どこに表示するか」を確認し、ユーザーは「カラーの丸いGアイコン」を共通ヘッダー（アプリ名の隣）とログイン画面に表示、と回答。
+- `GoogleIcon`は「Sign in with Google」ボタンで使われる公式4色G（青#4285F4・緑#34A853・黄#FBBC05・赤#EA4335、viewBox 0 0 18 18）のSVGをそのまま埋め込んだ小さなコンポーネント。`size`（px、デフォルト24）と`className`のみを受け取る。
+- 設置箇所: `src/app/page.tsx`のヘッダー（`UtensilsCrossed`＋「Googleグルメサーチ」タイトルの右隣、size=20）と`src/app/login/page.tsx`のカード見出し（同タイトルの右隣、size=22）。`page.tsx`のヘッダーは検索前・検索後で共通コンポーネントなので、この1箇所の追加で両画面をカバーしている。
+- なお、Google Places APIのデータを地図なしで表示する場合はGoogle Maps Platformの利用規約上「Powered by Google」ロゴまたは「Google Maps」テキストによる帰属表示が別途必要（`developers.google.com/maps/documentation/places/web-service/policies`）。今回追加したのはブランディング目的の丸いGアイコンのみで、この帰属表示要件は未対応（検索結果カード上に別途対応が必要になった場合は要検討）。
+
 ## 主要機能
 
 ### 検索バー（`src/components/SearchBar.tsx`）・絞り込みモーダル（`src/components/FilterModal.tsx`）

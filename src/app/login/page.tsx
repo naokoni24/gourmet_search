@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { UtensilsCrossed } from 'lucide-react'
+import GoogleIcon from '@/components/GoogleIcon'
 
 export default function LoginPage() {
   const [password, setPassword] = useState('')
@@ -40,6 +41,7 @@ export default function LoginPage() {
         <div className="flex items-center gap-2 justify-center mb-6">
           <UtensilsCrossed className="text-orange-500" size={28} />
           <h1 className="text-xl font-bold text-gray-800">Googleグルメサーチ</h1>
+          <GoogleIcon size={22} />
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">

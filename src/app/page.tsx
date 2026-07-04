@@ -5,6 +5,7 @@ import { SearchParams, Restaurant } from '@/types/restaurant'
 import SearchBar from '@/components/SearchBar'
 import FilterModal from '@/components/FilterModal'
 import RestaurantCard from '@/components/RestaurantCard'
+import GoogleIcon from '@/components/GoogleIcon'
 import { UtensilsCrossed } from 'lucide-react'
 
 const DEFAULT_PARAMS: SearchParams = {
@@ -83,6 +84,7 @@ export default function Home() {
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
           <UtensilsCrossed className="text-orange-500" size={24} />
           <h1 className="text-xl font-bold text-gray-800">Googleグルメサーチ</h1>
+          <GoogleIcon size={20} />
         </div>
       </header>
 
