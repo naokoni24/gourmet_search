@@ -22,9 +22,11 @@ GENRE_LABELS = {"和食", "洋食", "イタリアン", "中華", "ラーメン",
 # 例えば「洋食」で検索した際に「ビストロ」「ステーキ」「フレンチ」等の
 # 実質同じ括りの店舗まで弾かれてしまう。選んだジャンルごとに許容する
 # Google側の表記もあわせて定義する（未定義のジャンルは自分自身のみ許容）。
+#「レストラン」はGoogleがより具体的な分類を持たない店舗（沖縄料理店等、
+# 洋食と無関係な業態も含む）に広く使う汎用ラベルのため、いずれのグループにも含めない。
 GENRE_GROUPS: dict[str, set[str]] = {
-    "洋食": {"洋食", "レストラン", "ビストロ", "ステーキ", "フレンチ", "アメリカン", "ハンバーガー", "ピザ"},
-    "和食": {"和食", "とんかつ", "天ぷら", "しゃぶしゃぶ", "すき焼き"},
+    "洋食": {"洋食", "ビストロ", "ステーキ", "フレンチ", "アメリカン", "ハンバーガー", "ピザ"},
+    "和食": {"和食", "とんかつ", "天ぷら", "しゃぶしゃぶ", "すき焼き", "沖縄料理"},
     "居酒屋": {"居酒屋", "焼き鳥"},
     "イタリアン": {"イタリアン", "ピザ"},
 }
@@ -147,6 +149,15 @@ async def search(
                         api_key=google_key,
                         max_pages=1,
                     )
+                if "和食" in (genre.strip(), keyword.strip()):
+                    # 「和食」はメインクエリだけだと沖縄料理店が候補に上がらないことが
+                    # あるため、焼肉検索と同様に補完クエリでマージする
+                    okinawa_results = await google_places.search_restaurants(
+                        f"{place} 沖縄料理", google_key, count=AREA_SUPPLEMENT_COUNT,
+                        location=location or "",
+                        radius=effective_radius,
+                    )
+                    results = _merge_unique(results, okinawa_results)
         except Exception as e:
             import traceback
             print(f"[search error] {e}")
