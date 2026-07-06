@@ -148,6 +148,8 @@ Google Places API呼び出し（`backend/app/crawlers/google_places.py`）:
 
 - Text Search / Nearby Search とも1ページ20件、`pageToken` で最大3ページまで追加取得可能（`search_restaurants` の `max_pages` は `count` から算出、現在の呼び出しは基本1ページ運用）。
 - レスポンスは `PLACE_FIELD_MASK`（id, displayName, formattedAddress, rating, userRatingCount, location, primaryType, primaryTypeDisplayName, googleMapsUri）のみ取得し、写真フィールドは取得していない（API課金を抑える意図）。
+- 【2026-07-05 修正済み】`search_restaurants`の`locationBias`半径が`max(radius * 1.5, 2000)`となっており、ユーザーが距離を500m〜1000mに設定していても実際にはGoogleへ最低2000m圏で問い合わせていた。locationBiasは強制ではなくGoogle側の重み付けに過ぎないため、これを実際の距離より広く取ると圏外の店舗が60件（`SEARCH_RESULT_LIMIT`）の枠を消費し、後段の`distance_m`フィルタで捨てられる無駄が増える＝ユーザーには「一部の近い店舗が検索結果から漏れる」ように見える、という不具合につながっていた。`api_radius = radius`（ユーザー指定の距離をそのまま使用）に修正。
+  - 【調査の副産物】「荻窪＋キーワード焼き鳥」で店舗が漏れるとの報告を調査した際、上記の修正とは別に、**同一条件で検索してもGoogle Text Search自体が呼び出しごとに返す生の件数を変動させる**ことを確認した（例: raw件数が46件だったり60件だったりする。別の検索条件でも56/56/59件のようなブレを確認済みで、こちらのコードでは制御できないGoogle側の仕様）。`ジャンル`選択と違って`キーワード`欄の自由入力に対しては構造化フィルタで補正する手段が無いため、検索結果の完全な再現性・網羅性は保証できない仕様として扱う。
 - `primaryType` を `TYPE_MAP`（約35種類）で日本語ジャンル名に変換。
 
 ### 検索結果カード（`src/components/RestaurantCard.tsx`）

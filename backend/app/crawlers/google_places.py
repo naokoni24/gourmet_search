@@ -147,7 +147,11 @@ async def search_restaurants(
     }
     if location:
         lat, lng = location.split(",")
-        api_radius = max(radius * 1.5, 2000)
+        # locationBiasは強制ではなくGoogle側の重み付けだが、ここを実際の距離より
+        # 広く取ると圏外の店舗が上位互換枠を消費し、後段のdistance_mフィルタで
+        # 落とされる無駄が増える（＝本来表示されるべき近場の店舗が漏れる）ため、
+        # ユーザーが指定した距離をそのまま使う
+        api_radius = radius
         base_body["locationBias"] = {
             "circle": {
                 "center": {"latitude": float(lat), "longitude": float(lng)},
