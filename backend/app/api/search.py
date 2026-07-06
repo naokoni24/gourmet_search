@@ -17,6 +17,22 @@ SEARCH_RESULT_LIMIT = 60
 # ジャンル選択時と同様に厳密フィルタの対象にする。
 GENRE_LABELS = {"和食", "洋食", "イタリアン", "中華", "ラーメン", "居酒屋", "焼肉", "カフェ", "バー", "韓国料理"}
 
+# UIの「ジャンル」は大まかな括りだが、Googleの primaryType（TYPE_MAP参照）は
+# もっと細かく分かれているため、厳密フィルタで完全一致だけを見ると
+# 例えば「洋食」で検索した際に「ビストロ」「ステーキ」「フレンチ」等の
+# 実質同じ括りの店舗まで弾かれてしまう。選んだジャンルごとに許容する
+# Google側の表記もあわせて定義する（未定義のジャンルは自分自身のみ許容）。
+GENRE_GROUPS: dict[str, set[str]] = {
+    "洋食": {"洋食", "レストラン", "ビストロ", "ステーキ", "フレンチ", "アメリカン", "ハンバーガー", "ピザ"},
+    "和食": {"和食", "とんかつ", "天ぷら", "しゃぶしゃぶ", "すき焼き"},
+    "居酒屋": {"居酒屋", "焼き鳥"},
+    "イタリアン": {"イタリアン", "ピザ"},
+}
+
+def _genre_matches(selected_genre: str, item_genres: list[str]) -> bool:
+    accepted = GENRE_GROUPS.get(selected_genre, {selected_genre})
+    return any(label in g for label in accepted for g in item_genres)
+
 def _merge_unique(*groups: list[Restaurant]) -> list[Restaurant]:
     seen: set[str] = set()
     merged: list[Restaurant] = []
@@ -160,7 +176,7 @@ async def search(
         # キーワード欄にジャンル名そのものが入力された場合も同様に扱う。
         genre_filters = {g for g in (genre.strip(), keyword.strip()) if g in GENRE_LABELS}
         for genre_filter in genre_filters:
-            items = [r for r in items if any(genre_filter in g for g in r.genre)]
+            items = [r for r in items if _genre_matches(genre_filter, r.genre)]
         if dist_fn:
             for r in items:
                 r.distance_m = round(dist_fn(r))
