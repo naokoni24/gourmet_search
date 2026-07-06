@@ -35,6 +35,17 @@ def _genre_matches(selected_genre: str, item_genres: list[str]) -> bool:
     accepted = GENRE_GROUPS.get(selected_genre, {selected_genre})
     return any(label in g for label in accepted for g in item_genres)
 
+def _apply_name_genre_override(items: list[Restaurant]) -> None:
+    # GoogleのprimaryType分類は店名の表記と食い違うことがある
+    # （例:「洋食ツバキ亭」がjapanese_restaurant→「和食」に分類される）。
+    # 店名にジャンル名そのものが含まれる場合は、Googleの分類より
+    # 店名の表記を優先してgenreを上書きする（検索フィルタ・表示の両方に反映）。
+    for r in items:
+        for label in GENRE_LABELS:
+            if label in r.name:
+                r.genre = [label]
+                break
+
 def _merge_unique(*groups: list[Restaurant]) -> list[Restaurant]:
     seen: set[str] = set()
     merged: list[Restaurant] = []
@@ -178,6 +189,7 @@ async def search(
     dist_fn = make_dist_fn(location) if location else None
 
     def filter_list(items: list[Restaurant]) -> list[Restaurant]:
+        _apply_name_genre_override(items)
         if dist_fn and effective_radius:
             items = [r for r in items if dist_fn(r) <= effective_radius]
         if rating_min is not None:
