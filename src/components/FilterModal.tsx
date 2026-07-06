@@ -34,6 +34,8 @@ export default function FilterModal({ open, params, onChange, onClose, onApply }
   const set = (key: keyof SearchParams, value: unknown) =>
     onChange(p => ({ ...p, [key]: value }))
 
+  const hasLocation = params.place.trim() !== '' || params.current_lat != null
+
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
@@ -109,11 +111,16 @@ export default function FilterModal({ open, params, onChange, onClose, onApply }
           </button>
           <button
             onClick={onApply}
-            className="flex-1 bg-orange-500 hover:bg-orange-600 text-white rounded-lg py-2.5 text-sm font-semibold transition-colors"
+            disabled={!hasLocation}
+            title={hasLocation ? undefined : '駅名・エリアを入力するか、現在地を使ってください'}
+            className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white rounded-lg py-2.5 text-sm font-semibold transition-colors"
           >
             適用して検索
           </button>
         </div>
+        {!hasLocation && (
+          <p className="text-xs text-gray-400 text-center -mt-2">駅名・エリアを入力するか、現在地を使うと検索できます</p>
+        )}
       </div>
     </div>
   )

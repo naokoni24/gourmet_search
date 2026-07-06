@@ -46,6 +46,8 @@ export default function SearchBar({ params, onChange, onSearch, onOpenFilters, a
 
   const clearLocation = () => onChange(p => ({ ...p, current_lat: undefined, current_lng: undefined }))
 
+  const hasLocation = params.place.trim() !== '' || params.current_lat != null
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-2">
       <div className="flex flex-col sm:flex-row gap-2">
@@ -103,7 +105,8 @@ export default function SearchBar({ params, onChange, onSearch, onOpenFilters, a
 
         <button
           onClick={onSearch}
-          disabled={loading}
+          disabled={loading || !hasLocation}
+          title={hasLocation ? undefined : '駅名・エリアを入力するか、現在地を使ってください'}
           className="bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white rounded-lg px-5 py-2.5 text-sm font-semibold flex items-center justify-center gap-2 transition-colors shrink-0"
         >
           <Search size={16} />
@@ -111,6 +114,9 @@ export default function SearchBar({ params, onChange, onSearch, onOpenFilters, a
         </button>
       </div>
       {locError && <p className="text-xs text-red-500">{locError}</p>}
+      {!hasLocation && (
+        <p className="text-xs text-gray-400">駅名・エリアを入力するか、現在地を使うと検索できます</p>
+      )}
     </div>
   )
 }
